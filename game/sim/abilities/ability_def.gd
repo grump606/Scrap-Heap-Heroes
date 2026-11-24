@@ -13,6 +13,9 @@ extends Resource
 @export var cooldown: float = 5.0
 ## Delay between the press and the effect. The caster is rooted meanwhile.
 @export var windup: float = 0.0
+## Aimed at a spot on the ground (up to reach away) rather than a direction:
+## the windup telegraph is drawn there.
+@export var targets_point: bool = false
 
 @export_group("Hit")
 @export var damage: int = 0
@@ -21,6 +24,11 @@ extends Resource
 @export var radius: float = 0.0
 @export var reach: float = 0.0
 @export var angle_deg: float = 90.0
+## Flurries (Rocket Jab): how many hits, and the time between them.
+@export var hits: int = 1
+@export var hit_interval: float = 0.0
+## Damage multiplier while empowered (Dive Bomb during Frenzy Run).
+@export var empowered_multiplier: float = 1.0
 
 @export_group("Movement")
 @export var knockback_speed: float = 0.0
@@ -34,3 +42,12 @@ extends Resource
 ## Strength of the buff or debuff: slow fraction, armor amount, ...
 @export var magnitude: float = 0.0
 @export var stun_duration: float = 0.0
+## Time added to the effect (Frenzy Run: per new enemy hero hit).
+@export var extend_duration: float = 0.0
+
+@export_group("Support")
+## Healing: a flat amount for instant heals, per second for heals over time.
+@export var heal: int = 0
+## Damage a shield absorbs, and how long it lasts.
+@export var shield: int = 0
+@export var shield_duration: float = 0.0

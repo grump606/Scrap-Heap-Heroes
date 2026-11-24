@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="HeroDef" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://game/sim/entities/hero_def.gd" id="1"]
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="2"]
+[ext_resource type="Resource" path="res://data/abilities/yuzu_toss.tres" id="yuzu_toss"]
+[ext_resource type="Resource" path="res://data/abilities/calm_pulse.tres" id="calm_pulse"]
+[ext_resource type="Resource" path="res://data/abilities/hot_spring.tres" id="hot_spring"]
+[ext_resource type="Resource" path="res://data/abilities/steam_jet.tres" id="steam_jet"]
+[ext_resource type="Resource" path="res://data/abilities/bubble_shield.tres" id="bubble_shield"]
+[ext_resource type="Resource" path="res://data/abilities/grand_onsen.tres" id="grand_onsen"]
+[ext_resource type="Resource" path="res://data/abilities/chill_aura.tres" id="chill_aura"]
+[ext_resource type="Resource" path="res://data/abilities/pet_attack.tres" id="pa"]
+[ext_resource type="Resource" path="res://data/abilities/mech_attack.tres" id="ma"]
+
+[resource]
+script = ExtResource("1")
+id = &"capybara"
+display_name = "Capybara (Yuzu)"
+role = 2
+max_hp = 900
+pet_move_speed = 6.5
+mech_move_speed = 4.5
+pet_radius = 0.5
+mech_radius = 0.85
+flat_reduction = 5
+passive = ExtResource("chill_aura")
+pet_attack = ExtResource("pa")
+mech_attack = ExtResource("ma")
+pet_abilities = Array[ExtResource("2")]([ExtResource("yuzu_toss"), ExtResource("calm_pulse")])
+mech_abilities = Array[ExtResource("2")]([ExtResource("hot_spring"), ExtResource("steam_jet"), ExtResource("bubble_shield"), ExtResource("grand_onsen")])

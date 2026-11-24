@@ -1,8 +1,9 @@
 ## Moves every unit. Stateless: all state is in the world.
 ##
 ## - Forced movement (dash, knockback) overrides steering while it lasts.
-## - Units with a move_speed steer toward their move_input, slowed by SLOW
-##   and stopped by ROOTED or STUNNED. Others (dummies) coast to a stop.
+## - Units with a move_speed steer toward their move_input, sped up by HASTE,
+##   slowed by SLOW and stopped by ROOTED or STUNNED. Others (dummies) coast
+##   to a stop.
 ## - Structures never move, and are solid: walkers are pushed out of them.
 ## - The lane is enclosed: positions clamp to it. A knockback that hits a wall
 ##   or a structure ends there and pays its slam (Wall Crush), if any.
@@ -32,8 +33,11 @@ static func run(world: SimWorld, dt: float) -> void:
 			var target := Vector3.ZERO
 			if u.move_speed > 0.0 and not held:
 				var slow := Status.strongest(u, Status.Kind.SLOW, t)
-				target = Vector3(u.move_input.x, 0.0, u.move_input.y) * u.move_speed * (1.0 - slow)
-			u.velocity = u.velocity.move_toward(target, rules.hero_acceleration * dt)
+				var haste := Status.strongest(u, Status.Kind.HASTE, t)
+				target = Vector3(u.move_input.x, 0.0, u.move_input.y) * u.move_speed * (1.0 + haste) * (1.0 - slow)
+			# Haste speeds up getting going too, so a short burst is felt at once.
+			var accel := rules.hero_acceleration * (1.0 + Status.strongest(u, Status.Kind.HASTE, t))
+			u.velocity = u.velocity.move_toward(target, accel * dt)
 			if held:
 				u.velocity = Vector3.ZERO
 		u.position += u.velocity * dt
@@ -74,7 +78,7 @@ static func _hit_wall(world: SimWorld, u: UnitState) -> void:
 		return
 	var dealt := DamageSystem.deal(world, u.slam_source, u, u.slam_damage)
 	if u.slam_stun_ticks > 0:
-		Status.add(u, Status.Kind.STUNNED, world.tick + u.slam_stun_ticks)
+		Status.add_cc(u, Status.Kind.STUNNED, world.tick, world.tick + u.slam_stun_ticks)
 	world.emit(SimEvent.new(SimEvent.Type.WALL_SLAM, world.tick, u.entity_id, {
 		"amount": dealt, "x": u.position.x, "z": u.position.z,
 	}))

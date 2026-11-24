@@ -4,7 +4,8 @@
 ##   passed, the hero can act (not stunned, ejected or mid-dash/knockback) and,
 ##   for mech, the meter holds at least mech_min_energy_to_switch. Otherwise it
 ##   is dropped, not queued, so a press never fires later by surprise.
-## - Mech form drains the meter; pet form refills it.
+## - Mech form drains the meter; pet form refills it, unless NO_REFILL (Yuzu Toss).
+## - Switching ends any channel (Steam Jet).
 ## - An empty meter ejects the hero to pet form, briefly vulnerable.
 class_name FormSystem
 extends RefCounted
@@ -20,6 +21,7 @@ static func run(world: SimWorld) -> void:
 		if h.dead:
 			continue
 		if _can_switch(world, h, want):
+			h.stop_channel()
 			h.apply_form(want)
 			h.switch_ready_tick = world.tick + cooldown
 			world.emit(SimEvent.new(SimEvent.Type.FORM_SWITCH, world.tick, h.entity_id, {"form": want}))
@@ -28,7 +30,7 @@ static func run(world: SimWorld) -> void:
 			h.mech_energy -= rules.mech_drain_per_second * world.tick_dt
 			if h.mech_energy <= 0.0:
 				_eject(world, h, cooldown)
-		else:
+		elif not Status.active(h, Status.Kind.NO_REFILL, world.tick):
 			h.mech_energy = minf(h.mech_energy + rules.pet_refill_per_second * world.tick_dt, rules.mech_energy_max)
 
 
@@ -46,6 +48,7 @@ static func _can_switch(world: SimWorld, h: HeroState, want: int) -> bool:
 
 static func _eject(world: SimWorld, h: HeroState, cooldown: int) -> void:
 	h.mech_energy = 0.0
+	h.stop_channel()
 	h.apply_form(HeroState.Form.PET)
 	h.switch_ready_tick = world.tick + cooldown
 	Status.add(h, Status.Kind.VULNERABLE, world.tick + world.rules.seconds_to_ticks(world.rules.eject_vulnerable_time))

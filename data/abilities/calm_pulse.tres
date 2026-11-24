@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"calm_pulse"
+logic = &"calm_pulse"
+display_name = "Calm Pulse"
+description = "Halve the crowd control left on nearby allies."
+cooldown = 10.0
+radius = 6.0
+magnitude = 0.5

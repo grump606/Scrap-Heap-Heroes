@@ -79,7 +79,7 @@ extends Resource
 
 ## Bump when any balance value changes (here, in a HeroDef or an AbilityDef),
 ## so old replays are rejected, not desynced.
-@export var data_version: int = 4
+@export var data_version: int = 5
 
 
 ## Rounds, so 0.1 s at 60 Hz is 6 ticks, not 7 from float error.

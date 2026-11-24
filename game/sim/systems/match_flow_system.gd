@@ -60,6 +60,9 @@ static func _die(world: SimWorld, h: HeroState) -> void:
 	h.forced_until = 0
 	h.velocity = Vector3.ZERO
 	h.dash_ability = null
+	h.stop_channel()
+	h.frenzy_hits.clear()
+	h.air_end = 0
 	world.emit(SimEvent.new(SimEvent.Type.DEATH, world.tick, h.entity_id))
 
 

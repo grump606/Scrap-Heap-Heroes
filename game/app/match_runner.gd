@@ -10,6 +10,8 @@ extends Node3D
 ## Practice: you and a wandering bot with training dummies, no structures.
 ## Otherwise a full 3v3 lane match with bots.
 @export var practice: bool = false
+## The hero you play: wombat, weasel or capybara. F1/F2/F3 restart as one.
+@export var hero: StringName = &"wombat"
 ## Catch-up cap after a long frame or alt-tab (prevents the spiral of death).
 ## Frame pacing only: it never changes what the sim computes, so it isn't in MatchRules.
 @export var max_ticks_per_frame: int = 5
@@ -28,7 +30,7 @@ func _ready() -> void:
 
 func _start_new() -> void:
 	var rules := MatchSetup.default_rules()
-	start_match(MatchSetup.practice(match_seed, rules) if practice else MatchSetup.match_3v3(match_seed, rules))
+	start_match(MatchSetup.practice(match_seed, rules, hero) if practice else MatchSetup.match_3v3(match_seed, rules, hero))
 
 
 func start_match(setup: MatchSetup) -> void:
@@ -65,7 +67,14 @@ func _process(delta: float) -> void:
 		_hud.update_match(session.cur_snapshot, session.local.team)
 
 
+const HERO_KEYS := {KEY_F1: &"wombat", KEY_F2: &"weasel", KEY_F3: &"capybara"}
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and HERO_KEYS.has(event.keycode):
+		hero = HERO_KEYS[event.keycode]
+		restart()
+		return
 	if session != null and session.world.winner != SimWorld.NO_WINNER and event.is_action_pressed("ui_accept"):
 		restart()
 

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"yuzu_toss"
+logic = &"yuzu_toss"
+display_name = "Yuzu Toss"
+description = "Heal the first ally the yuzu hits. Pauses your mech refill."
+cooldown = 12.0
+heal = 120
+reach = 10.0
+radius = 0.7
+duration = 4.0

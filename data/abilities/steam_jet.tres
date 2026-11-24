@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"steam_jet"
+logic = &"steam_jet"
+display_name = "Steam Jet"
+description = "Channel a healing stream at an ally. Breaks if blocked or out of range."
+cooldown = 10.0
+reach = 7.0
+angle_deg = 60.0
+duration = 3.0
+heal = 70
+magnitude = 0.4

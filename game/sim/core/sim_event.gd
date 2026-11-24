@@ -9,12 +9,14 @@ enum Type {
 	DEATH = 2,
 	FORM_SWITCH = 3,    ## data: form
 	RESPAWN = 4,
-	ABILITY_CAST = 5,   ## data: ability, slot, windup (ticks)
+	ABILITY_CAST = 5,   ## data: ability, slot, windup (ticks), radius, tx, tz (ground target, if any)
 	EJECT = 6,          ## empty meter forced the hero out of mech form
 	WALL_SLAM = 7,      ## data: amount, x, z
-	AREA = 8,           ## an area effect landed. data: shape ("ring"/"cone"/"swipe"), x, z, radius, ax, az, angle
+	AREA = 8,           ## an area effect landed. data: shape ("ring"/"cone"/"swipe"/"line"), x, z, radius, ax, az, angle
 	SHOT = 9,           ## a tower fired. data: x, z (tower), tx, tz (target)
 	MATCH_END = 10,     ## a core fell. data: winner
+	HEAL = 11,          ## data: amount, source, x, z
+	SHIELD = 12,        ## a shield went up. data: amount, source
 }
 
 var type: int

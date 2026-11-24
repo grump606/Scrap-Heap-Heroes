@@ -75,6 +75,7 @@ func setup(rules: MatchRules, def: HeroDef) -> void:
 	help.text = "WASD move · right-click turn camera · %s attack · %s pet/mech · %s %s %s %s abilities (aim = camera)" % [
 		key_name(&"attack"), key_name(&"switch_form"), key_name(&"ability_1"), key_name(&"ability_2"),
 		key_name(&"ability_3"), key_name(&"ultimate")]
+	help.text += "\nF1 / F2 / F3: restart as Wombat / Weasel / Capybara"
 	help.position = Vector2(24, 48)
 	help.modulate = Color(1, 1, 1, 0.75)
 	add_child(help)

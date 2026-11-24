@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hot_spring"
+logic = &"hot_spring"
+display_name = "Hot Spring"
+description = "Place a healing pool. Allies get a small shield on entering."
+cooldown = 14.0
+targets_point = true
+reach = 4.0
+radius = 3.0
+duration = 6.0
+heal = 40
+shield = 60
+shield_duration = 4.0

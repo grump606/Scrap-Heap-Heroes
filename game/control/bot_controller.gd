@@ -8,6 +8,8 @@
 ## - Match (lane with structures): push the lane behind its minions, fight
 ##   the nearest threat with attacks and its kit, stay out of enemy tower
 ##   range without minion cover, manage the mech meter, retreat to heal.
+##   A support (Capybara) instead keeps a few meters behind the allied hero
+##   farthest forward and spends its kit on the team.
 class_name BotController
 extends Controller
 
@@ -21,6 +23,9 @@ const RETURN_ABOVE := 0.8
 const SIGHT := 11.0
 const ENTER_MECH_ENERGY := 55.0
 const LEAVE_MECH_ENERGY := 10.0
+## Support: how far behind the lead ally to stand, and who counts as hurt.
+const SUPPORT_TRAIL := 4.0
+const HURT_BELOW := 0.75
 
 var rules: MatchRules
 var def: HeroDef
@@ -91,11 +96,14 @@ func _play_lane(snap: Snapshot, me: Dictionary, tick: int) -> Array[Command]:
 
 	var threat := _nearest(_enemies(snap, true, false), pos, SIGHT)
 	var target := _pick_target(snap, me, pos)
+	var support := def.role == HeroDef.Role.SUPPORT
+	var hurt := _hurt_ally(snap, me, pos)
 
 	# Form and meter.
 	var switch_ready: bool = tick >= int(me["switch_ready_tick"])
 	if switch_ready:
-		var want_mech: bool = not _retreating and target.size() > 0 and me["mech_energy"] >= ENTER_MECH_ENERGY
+		var busy: bool = target.size() > 0 or (support and not hurt.is_empty())
+		var want_mech: bool = not _retreating and busy and me["mech_energy"] >= ENTER_MECH_ENERGY
 		var want_pet: bool = _retreating or me["mech_energy"] < LEAVE_MECH_ENERGY \
 			or (target.is_empty() and threat.is_empty() and me["mech_energy"] < 40.0)
 		if not mech and want_mech:
@@ -109,10 +117,18 @@ func _play_lane(snap: Snapshot, me: Dictionary, tick: int) -> Array[Command]:
 		if not threat.is_empty():
 			out.append_array(_use(snap, me, tick, &"mud_slide", away))
 			out.append_array(_use(snap, me, tick, &"dust_bath", away))
+			out.append_array(_use(snap, me, tick, &"sprint", away))
+			out.append_array(_use(snap, me, tick, &"pounce", away))
 		return out
 
+	if support:
+		out.append_array(_support(snap, me, tick, pos, hurt))
+		if not hurt.is_empty():
+			return out
+
 	if target.is_empty():
-		out.append_array(move_if_changed(tick, _lane_step(snap, pos)))
+		if not support:
+			out.append_array(move_if_changed(tick, _lane_step(snap, pos)))
 		return out
 
 	var tpos := _flat(target["position"])
@@ -121,7 +137,8 @@ func _play_lane(snap: Snapshot, me: Dictionary, tick: int) -> Array[Command]:
 	var gap := to.length() - float(me["radius"]) - float(target["radius"])
 	var attack := def.attack(me["form"])
 	var reach := attack.reach * 0.8 if attack != null else 1.5
-	out.append_array(move_if_changed(tick, aim if gap > reach else Vector2.ZERO))
+	if not support:
+		out.append_array(move_if_changed(tick, aim if gap > reach else Vector2.ZERO))
 	if attack != null and gap <= attack.reach and tick >= int(me["attack_ready"]):
 		out.append(Command.ability(player_id, tick, Command.ATTACK_SLOT, aim))
 	out.append_array(_kit(snap, me, tick, pos, target, aim, gap, hp_frac))
@@ -135,7 +152,13 @@ func _kit(snap: Snapshot, me: Dictionary, tick: int, pos: Vector2, target: Dicti
 	var out: Array[Command] = []
 	var is_hero := target.has("player_id")
 	var crowd := _enemies(snap, true, true).filter(func(e): return _flat(e["position"]).distance_to(pos) <= 5.0).size()
-	if me["form"] == HeroState.Form.MECH:
+	var mech: bool = me["form"] == HeroState.Form.MECH
+	match def.id:
+		&"weasel":
+			return _weasel_kit(snap, me, tick, target, aim, gap, is_hero, mech)
+		&"capybara":
+			return out
+	if mech:
 		if gap <= 2.5:
 			out.append_array(_use(snap, me, tick, &"rump_bump", aim))
 		if is_hero and gap > 2.5 and gap < 6.0:
@@ -150,14 +173,115 @@ func _kit(snap: Snapshot, me: Dictionary, tick: int, pos: Vector2, target: Dicti
 	return out
 
 
+## Weasel: close in with Rocket Boost, dive from range, finish with jabs,
+## and go into Frenzy Run when an enemy hero is low.
+func _weasel_kit(snap: Snapshot, me: Dictionary, tick: int, target: Dictionary, aim: Vector2,
+		gap: float, is_hero: bool, mech: bool) -> Array[Command]:
+	var out: Array[Command] = []
+	var low: bool = is_hero and float(target["hp"]) < 0.5 * float(target["max_hp"])
+	if mech:
+		if gap <= 2.0:
+			out.append_array(_use(snap, me, tick, &"rocket_jab", aim))
+		if low and gap < 8.0:
+			out.append_array(_use(snap, me, tick, &"frenzy_run", aim))
+		if is_hero and gap > 4.0 and gap < 9.5:
+			out.append_array(_use(snap, me, tick, &"dive_bomb", aim, gap + float(target["radius"])))
+		elif is_hero and gap > 2.5 and gap < 6.0:
+			out.append_array(_use(snap, me, tick, &"rocket_boost", aim))
+	else:
+		if is_hero and gap > 3.0 and gap < 6.0:
+			out.append_array(_use(snap, me, tick, &"pounce", aim))
+		elif gap > 6.0:
+			out.append_array(_use(snap, me, tick, &"sprint", aim))
+	return out
+
+
+## Support: trail the lead ally, and heal, shield and protect the team.
+## Returns movement plus casts; attacks are left to the normal fight code.
+func _support(snap: Snapshot, me: Dictionary, tick: int, pos: Vector2, hurt: Dictionary) -> Array[Command]:
+	var out: Array[Command] = []
+	var side := MatchRules.team_side(team)
+	var mech: bool = me["form"] == HeroState.Form.MECH
+	var lead := _lead_ally(snap, me)
+	var goal := pos + _lane_step(snap, pos) * 2.0
+	if not lead.is_empty():
+		goal = _flat(lead["position"]) + Vector2(0, SUPPORT_TRAIL * side)
+	if not hurt.is_empty():
+		var hpos := _flat(hurt["position"])
+		goal = hpos + (pos - hpos).limit_length(4.0)
+	var d := goal - pos
+	# Stopping near the goal also makes Chill Aura heal more.
+	out.append_array(move_if_changed(tick, d.normalized() if d.length() > 1.5 else Vector2.ZERO))
+	if hurt.is_empty():
+		return out
+	var to := _flat(hurt["position"]) - pos
+	var aim := to.normalized() if to.length() > 0.01 else Vector2(0, -side)
+	var frac := float(hurt["hp"]) / float(hurt["max_hp"])
+	var near_allies := _allies(snap, me).filter(func(a): return _flat(a["position"]).distance_to(pos) <= 6.0)
+	if mech:
+		if to.length() <= 6.5:
+			out.append_array(_use(snap, me, tick, &"steam_jet", aim))
+		if frac < 0.5 and to.length() <= 8.5:
+			out.append_array(_use(snap, me, tick, &"bubble_shield", aim))
+		if to.length() <= 6.0:
+			out.append_array(_use(snap, me, tick, &"hot_spring", aim, minf(to.length(), 4.0)))
+		var low_near := near_allies.filter(func(a): return float(a["hp"]) < 0.5 * float(a["max_hp"])).size()
+		if low_near >= 2 or (low_near >= 1 and not _nearest(_enemies(snap, true, false), pos, 7.0).is_empty()):
+			out.append_array(_use(snap, me, tick, &"grand_onsen", aim))
+	else:
+		if frac < 0.6 and to.length() <= 9.0:
+			out.append_array(_use(snap, me, tick, &"yuzu_toss", aim))
+		for a in near_allies:
+			if _active(a, Status.Kind.STUNNED, tick) or _active(a, Status.Kind.SLOW, tick):
+				out.append_array(_use(snap, me, tick, &"calm_pulse", aim))
+				break
+	return out
+
+
+## The most hurt allied hero (by health fraction) in sight, if below HURT_BELOW. {} if none.
+func _hurt_ally(snap: Snapshot, me: Dictionary, pos: Vector2) -> Dictionary:
+	var best := {}
+	var best_f := HURT_BELOW
+	for a in _allies(snap, me):
+		var f := float(a["hp"]) / float(a["max_hp"])
+		if f < best_f and _flat(a["position"]).distance_to(pos) <= SIGHT:
+			best = a
+			best_f = f
+	return best
+
+
+## The living allied hero deepest into the enemy half. {} if none.
+func _lead_ally(snap: Snapshot, me: Dictionary) -> Dictionary:
+	var best := {}
+	var best_p := -INF
+	var side := MatchRules.team_side(team)
+	for a in _allies(snap, me):
+		var p: float = -a["position"].z * side
+		if p > best_p:
+			best = a
+			best_p = p
+	return best
+
+
+## Living allied heroes other than this bot's own.
+func _allies(snap: Snapshot, me: Dictionary) -> Array:
+	var out := []
+	for id in snap.heroes:
+		var h: Dictionary = snap.heroes[id]
+		if h["team"] == team and not h["dead"] and h["entity_id"] != me["entity_id"]:
+			out.append(h)
+	return out
+
+
 ## A command for ability `id` if this hero has it in its current form and it is ready.
-func _use(_snap: Snapshot, me: Dictionary, tick: int, id: StringName, aim: Vector2) -> Array[Command]:
+## dist: ground distance for abilities aimed at a spot (-1 = full reach).
+func _use(_snap: Snapshot, me: Dictionary, tick: int, id: StringName, aim: Vector2, dist: float = -1.0) -> Array[Command]:
 	var form: int = me["form"]
 	var list := def.abilities(form)
 	var ready: Array = me["mech_ready" if form == HeroState.Form.MECH else "pet_ready"]
 	for i in list.size():
 		if list[i].id == id and tick >= int(ready[i]):
-			return [Command.ability(player_id, tick, i, aim)]
+			return [Command.ability(player_id, tick, i, aim, dist)]
 	return []
 
 

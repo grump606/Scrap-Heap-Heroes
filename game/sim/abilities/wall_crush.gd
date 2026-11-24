@@ -6,7 +6,8 @@ class_name WallCrush
 extends RefCounted
 
 
-static func cast(world: SimWorld, caster: HeroState, def: AbilityDef, aim: Vector2) -> void:
+static func cast(world: SimWorld, caster: HeroState, def: AbilityDef, ctx: CastContext) -> void:
+	var aim := ctx.aim
 	KnockbackSystem.dash(world, caster, aim, def.dash_speed, world.rules.seconds_to_ticks(def.dash_duration))
 	caster.dash_ability = def
 

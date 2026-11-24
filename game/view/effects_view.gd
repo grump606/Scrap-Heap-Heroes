@@ -1,5 +1,5 @@
-## Short-lived visuals driven by sim events: damage numbers, area flashes,
-## windup telegraphs and eject/slam callouts. Reads events only.
+## Short-lived visuals driven by sim events: damage and heal numbers, area
+## flashes, windup telegraphs and eject/slam callouts. Reads events only.
 class_name EffectsView
 extends Node3D
 
@@ -13,7 +13,11 @@ func show_events(events: Array[SimEvent], snap: Snapshot, tick_dt: float) -> voi
 	for e in events:
 		match e.type:
 			SimEvent.Type.HIT:
-				_float_text(Vector3(e.data["x"], 2.0, e.data["z"]), "-%d" % e.data["amount"], Color(1, 0.95, 0.8), 44)
+				var absorbed := int(e.data.get("absorbed", 0))
+				var txt := "-%d" % e.data["amount"] if absorbed <= 0 else "-%d (%d)" % [e.data["amount"], absorbed]
+				_float_text(Vector3(e.data["x"], 2.0, e.data["z"]), txt, Color(1, 0.95, 0.8), 44)
+			SimEvent.Type.HEAL:
+				_float_text(Vector3(e.data["x"] + 0.3, 2.2, e.data["z"]), "+%d" % e.data["amount"], Color(0.45, 1.0, 0.5), 36)
 			SimEvent.Type.WALL_SLAM:
 				_float_text(Vector3(e.data["x"], 2.8, e.data["z"]), "SLAM!", Color(1, 0.5, 0.1), 64)
 			SimEvent.Type.EJECT:
@@ -21,10 +25,14 @@ func show_events(events: Array[SimEvent], snap: Snapshot, tick_dt: float) -> voi
 				if not h.is_empty():
 					_float_text(h["position"] + Vector3(0, 2.5, 0), "EJECT!", Color(1, 0.3, 0.3), 56)
 			SimEvent.Type.SHOT:
-				_beam(Vector3(e.data["x"], 4.4, e.data["z"]), Vector3(e.data["tx"], 0.8, e.data["tz"]))
+				_beam(Vector3(e.data["x"], 4.4, e.data["z"]), Vector3(e.data["tx"], 0.8, e.data["tz"]), Color(1.0, 0.9, 0.5, 0.9))
 			SimEvent.Type.AREA:
 				var center := Vector3(e.data["x"], 0.05, e.data["z"])
-				if e.data["shape"] == "swipe":
+				if e.data["shape"] == "line":
+					var dir := Vector3(e.data["ax"], 0.0, e.data["az"])
+					_beam(center + Vector3(0, 1.0, 0), center + Vector3(0, 1.0, 0) + dir * float(e.data["radius"]),
+						Color(1.0, 0.85, 0.2, 0.9))
+				elif e.data["shape"] == "swipe":
 					_flash(_cone_mesh(e.data["radius"], e.data["angle"]), center,
 						atan2(-e.data["ax"], -e.data["az"]), Color(1, 1, 1, 0.18), 0.15)
 				elif e.data["shape"] == "cone":
@@ -37,11 +45,13 @@ func show_events(events: Array[SimEvent], snap: Snapshot, tick_dt: float) -> voi
 				var h: Dictionary = snap.heroes.get(e.entity_id, {})
 				if int(e.data.get("windup", 0)) > 0 and float(e.data.get("radius", 0.0)) > 0.0 and not h.is_empty():
 					var p: Vector3 = h["position"]
+					if e.data.has("tx"):
+						p = Vector3(e.data["tx"], 0.0, e.data["tz"])
 					_flash(_disc_mesh(e.data["radius"]), Vector3(p.x, 0.04, p.z), 0.0, TELEGRAPH_COLOR,
 						int(e.data["windup"]) * tick_dt)
 
 
-func _beam(from: Vector3, to: Vector3) -> void:
+func _beam(from: Vector3, to: Vector3, color: Color) -> void:
 	var length := from.distance_to(to)
 	if length < 0.01:
 		return
@@ -51,7 +61,7 @@ func _beam(from: Vector3, to: Vector3) -> void:
 	c.bottom_radius = 0.08
 	c.height = length
 	m.mesh = c
-	var mat := ViewParts.glow(Color(1.0, 0.9, 0.5, 0.9))
+	var mat := ViewParts.glow(color)
 	m.material_override = mat
 	add_child(m)
 	m.global_position = (from + to) * 0.5

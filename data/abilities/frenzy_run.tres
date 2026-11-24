@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"frenzy_run"
+logic = &"frenzy_run"
+display_name = "Frenzy Run"
+description = "Rocket Boost and Dive Bomb have no cooldown; Dive Bomb targets enemies for more damage. New enemy hits extend it. Less healing received."
+is_ultimate = true
+cooldown = 50.0
+duration = 4.0
+extend_duration = 1.0
+magnitude = 0.5

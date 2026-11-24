@@ -27,8 +27,31 @@ var mech_ready: Array[int] = []
 var attack_ready: int = 0
 ## Ability presses this tick: [{slot, aim: Vector2}]; AbilitySystem consumes them.
 var ability_requests: Array = []
-## The contact dash in progress (Wall Crush), or null.
+## The contact dash in progress (Wall Crush, Rocket Boost), or null.
 var dash_ability: AbilityDef
+## A channeled ability in progress (Steam Jet): its def, the unit it is
+## aimed at, and the tick it ends. channel_target 0 = not channeling.
+var channel_ability: AbilityDef
+var channel_target: int = 0
+var channel_until: int = 0
+## Airborne arc (Pounce, Dive Bomb), for the view only: the hero is off the
+## ground from air_start to air_end, peaking at air_height meters. The sim is
+## flat, so being airborne changes nothing else.
+var air_start: int = 0
+var air_end: int = 0
+var air_height: float = 0.0
+## Enemy heroes already hit during the current Frenzy Run.
+var frenzy_hits: Array[int] = []
+
+
+func is_channeling() -> bool:
+	return channel_target != 0
+
+
+func stop_channel() -> void:
+	channel_ability = null
+	channel_target = 0
+	channel_until = 0
 
 
 static func other_form(f: int) -> int:
@@ -62,6 +85,10 @@ func to_dict() -> Dictionary:
 		"pet_ready": pet_ready.duplicate(),
 		"mech_ready": mech_ready.duplicate(),
 		"attack_ready": attack_ready,
+		"channel_target": channel_target,
+		"air_start": air_start,
+		"air_end": air_end,
+		"air_height": air_height,
 	})
 	return d
 
@@ -69,4 +96,6 @@ func to_dict() -> Dictionary:
 func hash_fields() -> Array:
 	return super() + [player_id, String(hero_id), spawn, form, mech_energy,
 		switch_ready_tick, form_request, respawn_tick, pet_ready, mech_ready, attack_ready,
-		ability_requests, String(dash_ability.id) if dash_ability != null else ""]
+		ability_requests, String(dash_ability.id) if dash_ability != null else "",
+		String(channel_ability.id) if channel_ability != null else "", channel_target, channel_until,
+		air_start, air_end, air_height, frenzy_hits]

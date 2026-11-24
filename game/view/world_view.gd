@@ -9,6 +9,7 @@ var _hero_views: Dictionary = {}  # entity_id -> HeroView
 var _dummy_views: Dictionary = {}  # entity_id -> DummyView
 var _minion_views: Dictionary = {}  # entity_id -> MinionView
 var _structure_views: Dictionary = {}  # entity_id -> StructureView
+var _zone_views: Dictionary = {}  # entity_id -> ZoneView
 
 
 func _ready() -> void:
@@ -76,7 +77,7 @@ func render(prev: Snapshot, cur: Snapshot, alpha: float) -> void:
 	_sync(_hero_views, prev.heroes if prev != null else {}, cur.heroes, alpha, cur,
 		func(id, d):
 			var v := HeroView.new()
-			v.setup(id, d["team"])
+			v.setup(id, d["team"], StringName(d.get("hero_id", "")))
 			return v)
 	_sync(_dummy_views, prev.dummies if prev != null else {}, cur.dummies, alpha, cur,
 		func(id, _d):
@@ -92,6 +93,11 @@ func render(prev: Snapshot, cur: Snapshot, alpha: float) -> void:
 		func(id, d):
 			var v := StructureView.new()
 			v.setup(id, d["team"], d["kind"], d["radius"])
+			return v)
+	_sync(_zone_views, {}, cur.zones, alpha, cur,
+		func(id, d):
+			var v := ZoneView.new()
+			v.setup(id, d["team"], d["ability"], d["radius"])
 			return v)
 
 

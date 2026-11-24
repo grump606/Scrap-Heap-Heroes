@@ -18,6 +18,9 @@ enum Role { TANK = 0, DAMAGE = 1, SUPPORT = 2 }
 ## Passive flat damage reduction per hit (Wombat's Heavy Hide). Mech form
 ## multiplies it by MatchRules.mech_reduction_multiplier.
 @export var flat_reduction: int = 0
+## Always-on passive with its own logic (Capybara's Chill Aura), or null.
+## Plain stat passives, like Wombat's Heavy Hide, use flat_reduction instead.
+@export var passive: AbilityDef
 ## Basic attacks: pet form's is light, mech form's hits hard.
 @export var pet_attack: AbilityDef
 @export var mech_attack: AbilityDef

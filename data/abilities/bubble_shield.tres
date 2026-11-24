@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bubble_shield"
+logic = &"bubble_shield"
+display_name = "Bubble Shield"
+description = "Bubble an ally (or yourself) to absorb damage."
+cooldown = 12.0
+reach = 9.0
+angle_deg = 60.0
+shield = 250
+shield_duration = 3.0

@@ -5,6 +5,7 @@ class_name MudSlide
 extends RefCounted
 
 
-static func cast(world: SimWorld, caster: HeroState, def: AbilityDef, aim: Vector2) -> void:
+static func cast(world: SimWorld, caster: HeroState, def: AbilityDef, ctx: CastContext) -> void:
+	var aim := ctx.aim
 	KnockbackSystem.dash(world, caster, aim, def.dash_speed, world.rules.seconds_to_ticks(def.dash_duration))
 	Status.add(caster, Status.Kind.ARMOR, world.tick + world.rules.seconds_to_ticks(def.duration), def.magnitude)

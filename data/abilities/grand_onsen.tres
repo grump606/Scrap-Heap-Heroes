@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"grand_onsen"
+logic = &"grand_onsen"
+display_name = "Grand Onsen"
+description = "A large zone: allies heal faster and can't be crowd controlled; enemies inside receive less healing."
+is_ultimate = true
+cooldown = 60.0
+radius = 6.0
+duration = 4.0
+heal = 70
+magnitude = 0.5

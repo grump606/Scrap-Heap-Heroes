@@ -3,6 +3,7 @@
 ## reduction = passive flat value (doubled in mech form) + ARMOR buffs,
 ##             0 while VULNERABLE; ultimates ignore part of it.
 ## dealt     = max(amount - reduction, ceil(amount * damage_floor_fraction))
+## Shields (Status SHIELD) soak up the dealt amount before health does.
 ##
 ## Structures: only heroes damage them (mech form multiplies it by
 ## mech_structure_multiplier), and a core takes nothing while its tower stands.
@@ -42,7 +43,8 @@ static func structure_amount(world: SimWorld, source_id: int, s: StructureState,
 	return amount
 
 
-## Deals the hit and returns the damage done. Death is handled by MatchFlowSystem.
+## Deals the hit and returns the damage done, shields included. Death is
+## handled by MatchFlowSystem.
 static func deal(world: SimWorld, source_id: int, target: UnitState, amount: int, ultimate: bool = false) -> int:
 	if target.dead or target.hp <= 0 or amount <= 0:
 		return 0  # Already down this tick; MatchFlowSystem finishes it off.
@@ -51,10 +53,15 @@ static func deal(world: SimWorld, source_id: int, target: UnitState, amount: int
 		if amount <= 0:
 			return 0
 	var dealt := preview(world, target, amount, ultimate)
-	target.hp = maxi(target.hp - dealt, 0)
+	var absorbed := Status.absorb(target, world.tick, dealt)
+	target.hp = maxi(target.hp - (dealt - absorbed), 0)
 	if target is DummyState:
 		target.reset_at = world.tick + world.rules.seconds_to_ticks(world.rules.dummy_reset_time)
 	world.emit(SimEvent.new(SimEvent.Type.HIT, world.tick, target.entity_id, {
-		"amount": dealt, "source": source_id, "x": target.position.x, "z": target.position.z,
+		"amount": dealt - absorbed, "absorbed": absorbed, "source": source_id,
+		"x": target.position.x, "z": target.position.z,
 	}))
+	var src := world.heroes.get(source_id) as HeroState
+	if src != null and target is HeroState:
+		FrenzyRun.on_hero_hit(world, src, target)
 	return dealt

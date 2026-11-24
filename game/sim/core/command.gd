@@ -46,18 +46,29 @@ const ATTACK_SLOT := -1
 
 ## Uses an ability slot of the hero's current form (or ATTACK_SLOT). aim is a world XZ
 ## direction (from the camera); it is normalized and quantized like moves.
-static func ability(p_player_id: int, p_tick: int, slot: int, aim: Vector2) -> Command:
+## dist, if given (>= 0), is how far away a ground-targeted ability should
+## land, in meters; it travels in tenths of a meter. Without it, the ability's
+## full reach is used.
+static func ability(p_player_id: int, p_tick: int, slot: int, aim: Vector2, dist: float = -1.0) -> Command:
 	var a := aim.normalized() if aim.length_squared() > 0.000001 else Vector2.ZERO
-	return Command.new(p_player_id, p_tick, Type.ABILITY, {
+	var payload := {
 		"slot": slot,
 		"x": int(round(a.x * AXIS_MAX)),
 		"z": int(round(a.y * AXIS_MAX)),
-	})
+	}
+	if dist >= 0.0:
+		payload["d"] = int(round(dist * 10.0))
+	return Command.new(p_player_id, p_tick, Type.ABILITY, payload)
 
 
 ## Aim of an ABILITY command; zero if none was given.
 func aim_dir() -> Vector2:
 	return move_dir()
+
+
+## Target distance of an ABILITY command in meters, or -1 if none was given.
+func aim_distance() -> float:
+	return float(payload["d"]) / 10.0 if payload.has("d") else -1.0
 
 
 func move_dir() -> Vector2:

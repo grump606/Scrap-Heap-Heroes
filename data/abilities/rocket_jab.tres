@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"rocket_jab"
+logic = &"rocket_jab"
+display_name = "Rocket Jab"
+description = "A quick flurry of rocket punches in front."
+cooldown = 4.0
+damage = 35
+hits = 3
+hit_interval = 0.12
+reach = 2.4
+angle_deg = 70.0

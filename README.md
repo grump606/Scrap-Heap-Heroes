@@ -19,7 +19,9 @@ The design and architecture reference is the
 ## Run
 
 - Play: open the folder in Godot and press F5. You start a 3v3 match as the
-  blue Wombat, with a Weasel and a Wombat bot against three orange bots.
+  blue Wombat, with Weasel and Capybara bots against an orange Wombat,
+  Weasel and Capybara. F1 / F2 / F3 restart the match as Wombat, Weasel or
+  Capybara (or set `hero` on the Main node).
   Destroy the enemy tower, then their Power Core (shielded until its tower
   falls). Minions walk the lane every 25 s; they soak tower shots but can't
   hurt structures. Heal behind your own core. Enter starts a new match once
@@ -29,7 +31,9 @@ The design and architecture reference is the
   Esc releases it. Left-click attacks (hold to keep swinging). F switches
   between pet and mech form (2 s cooldown, mech needs 30 energy). Q / E use
   the pet skills; in mech form Q / E / R are the three skills and X the
-  ultimate. Attacks and abilities aim where the camera looks.
+  ultimate. Attacks and abilities aim where the camera looks; ground-aimed
+  ones (Dive Bomb, Hot Spring) land at full range. Ally-targeted ones
+  (Steam Jet, Bubble Shield) pick the ally nearest where you look.
 - Tests:
   ```
   godot --headless --path . --import

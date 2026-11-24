@@ -12,6 +12,8 @@ var dummies: Dictionary = {}
 var minions: Dictionary = {}
 ## entity_id -> Dictionary (see StructureState.to_dict).
 var structures: Dictionary = {}
+## entity_id -> Dictionary (see ZoneState.to_dict).
+var zones: Dictionary = {}
 ## SimWorld.NO_WINNER while the match is on.
 var winner: int = -1
 
@@ -45,5 +47,6 @@ func for_team(_team: int) -> Snapshot:
 	var s := Snapshot.new(tick, heroes.duplicate(true), dummies.duplicate(true))
 	s.minions = minions.duplicate(true)
 	s.structures = structures.duplicate(true)
+	s.zones = zones.duplicate(true)
 	s.winner = winner
 	return s

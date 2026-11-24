@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"chill_aura"
+logic = &"chill_aura"
+display_name = "Chill Aura"
+description = "Nearby allies slowly heal, faster while you stand still."
+cooldown = 0.0
+radius = 6.0
+heal = 10
+magnitude = 2.5

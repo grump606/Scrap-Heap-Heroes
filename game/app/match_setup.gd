@@ -38,12 +38,12 @@ static func game_version() -> String:
 
 
 ## First-step practice match: one human and one bot, one hero each.
-static func practice(p_seed: int, p_rules: MatchRules) -> MatchSetup:
+static func practice(p_seed: int, p_rules: MatchRules, my_hero: StringName = &"wombat") -> MatchSetup:
 	var s := MatchSetup.new()
 	s.match_seed = p_seed
 	s.rules = p_rules
 	s.slots = [
-		{"player_id": 1, "team": 0, "hero_def": hero_def(&"wombat"), "kind": SlotKind.HUMAN, "spawn": Vector3(-5, 0, 5)},
+		{"player_id": 1, "team": 0, "hero_def": hero_def(my_hero), "kind": SlotKind.HUMAN, "spawn": Vector3(-5, 0, 5)},
 		{"player_id": 2, "team": 1, "hero_def": hero_def(&"weasel"), "kind": SlotKind.BOT, "spawn": Vector3(5, 0, -5)},
 	]
 	# One dummy in the open, one by the west wall for Wall Crush.
@@ -51,16 +51,24 @@ static func practice(p_seed: int, p_rules: MatchRules) -> MatchSetup:
 	return s
 
 
-## A 3v3 match on the lane: you (Wombat) with a Weasel and a Wombat bot,
-## against the same three as bots. Players 1-3 are team 0, 4-6 team 1.
-static func match_3v3(p_seed: int, p_rules: MatchRules) -> MatchSetup:
+## Each team's three heroes: one tank, one damage, one support (forced 1-1-1).
+const LINEUP: Array[StringName] = [&"wombat", &"weasel", &"capybara"]
+
+
+## A 3v3 match on the lane, each team Wombat, Weasel and Capybara. You
+## (player 1) play my_hero on team 0 with the other two as bot teammates,
+## against three bots. Players 1-3 are team 0, 4-6 team 1.
+static func match_3v3(p_seed: int, p_rules: MatchRules, my_hero: StringName = &"wombat") -> MatchSetup:
 	var s := MatchSetup.new()
 	s.match_seed = p_seed
 	s.rules = p_rules
 	s.lane_objectives = true
-	var lineup := [&"wombat", &"weasel", &"wombat"]
 	var xs := [0.0, -3.0, 3.0]
 	for team in [0, 1]:
+		var lineup := LINEUP.duplicate()
+		if team == 0 and lineup.has(my_hero):
+			lineup.erase(my_hero)
+			lineup.push_front(my_hero)
 		var z := p_rules.hero_spawn_z * MatchRules.team_side(team)
 		for i in 3:
 			var human: bool = team == 0 and i == 0

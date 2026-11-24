@@ -18,7 +18,10 @@ var heroes: Dictionary = {}  # entity_id -> HeroState
 var dummies: Dictionary = {}  # entity_id -> DummyState
 var minions: Dictionary = {}  # entity_id -> MinionState
 var structures: Dictionary = {}  # entity_id -> StructureState
-## Abilities waiting out their windup: [{at, caster, form, slot, ax, az}].
+var zones: Dictionary = {}  # entity_id -> ZoneState
+## Ability stages waiting for their tick: windups (stage 0) and the follow-ups
+## an ability schedules (stage 1+). See AbilitySystem.schedule.
+## [{at, caster, form, slot, ax, az, d, target, stage, data}]
 var pending_casts: Array = []
 ## True when towers, cores and minion waves are in play (see add_lane_objectives).
 var lane_objectives: bool = false
@@ -125,6 +128,22 @@ func add_minion(team: int, at: Vector3) -> int:
 	return m.entity_id
 
 
+## Places a lasting ground area for def (see ZoneState). Returns its id.
+func add_zone(owner: HeroState, def: AbilityDef, at: Vector3, radius: float, duration_ticks: int) -> int:
+	var z := ZoneState.new()
+	z.entity_id = next_entity_id()
+	z.team = owner.team
+	z.owner_id = owner.entity_id
+	z.def = def
+	z.position = Vector3(clampf(at.x, -rules.arena_half_width, rules.arena_half_width), 0.0,
+		clampf(at.z, -rules.arena_half_length, rules.arena_half_length))
+	z.radius = radius
+	z.start_tick = tick
+	z.until = tick + duration_ticks
+	zones[z.entity_id] = z
+	return z.entity_id
+
+
 ## Systems report what happened through this; step() returns the tick's events.
 func emit(event: SimEvent) -> void:
 	_pending_events.append(event)
@@ -149,6 +168,10 @@ func sorted_minion_ids() -> Array:
 
 func sorted_structure_ids() -> Array:
 	return _sorted_keys(structures)
+
+
+func sorted_zone_ids() -> Array:
+	return _sorted_keys(zones)
 
 
 ## Every hittable unit (heroes, dummies, minions, structures), by entity id.
@@ -201,6 +224,8 @@ func step(commands: Array[Command]) -> Array[SimEvent]:
 			Status.expire(u, tick)
 		FormSystem.run(self)
 		AbilitySystem.run(self)
+		PassiveSystem.run(self)
+		ZoneSystem.run(self)
 		MinionAiSystem.run(self)
 		TowerSystem.run(self)
 		MovementSystem.run(self, tick_dt)
@@ -221,7 +246,8 @@ func _apply(cmd: Command) -> void:
 		Command.Type.SWITCH_FORM:
 			h.form_request = int(cmd.payload.get("form", HeroState.NO_REQUEST))
 		Command.Type.ABILITY:
-			h.ability_requests.append({"slot": int(cmd.payload.get("slot", -1)), "aim": cmd.aim_dir()})
+			h.ability_requests.append({"slot": int(cmd.payload.get("slot", -1)), "aim": cmd.aim_dir(),
+				"dist": cmd.aim_distance()})
 		_:
 			pass
 
@@ -230,6 +256,7 @@ func snapshot() -> Snapshot:
 	var s := Snapshot.new(tick, _dicts(heroes), _dicts(dummies))
 	s.minions = _dicts(minions)
 	s.structures = _dicts(structures)
+	s.zones = _dicts(zones)
 	s.winner = winner
 	return s
 
@@ -240,6 +267,8 @@ func state_hash() -> String:
 	var parts: Array = [tick, _next_entity_id, rng.get_states(), pending_casts, lane_objectives, winner]
 	for u in units():
 		parts.append(u.hash_fields())
+	for id in sorted_zone_ids():
+		parts.append(zones[id].hash_fields())
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)
 	ctx.update(var_to_bytes(parts))
