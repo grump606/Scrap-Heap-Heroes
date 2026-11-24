@@ -6,6 +6,9 @@ class_name MatchRunner
 extends Node3D
 
 @export var match_seed: int = 12345
+## Catch-up cap after a long frame or alt-tab (prevents the spiral of death).
+## Frame pacing only: it never changes what the sim computes, so it isn't in MatchRules.
+@export var max_ticks_per_frame: int = 5
 
 var session: MatchSession
 var clock: TickClock
@@ -20,7 +23,7 @@ func _ready() -> void:
 
 func start_match(setup: MatchSetup) -> void:
 	session = MatchSession.new(setup)
-	clock = TickClock.new(setup.rules.tick_rate, setup.rules.max_ticks_per_frame)
+	clock = TickClock.new(setup.rules.tick_rate, max_ticks_per_frame)
 
 	_world_view = WorldView.new()
 	add_child(_world_view)

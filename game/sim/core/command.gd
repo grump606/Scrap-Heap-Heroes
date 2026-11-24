@@ -12,6 +12,7 @@ const AXIS_MAX := 127
 var player_id: int
 var tick: int
 var type: int
+## Integers only: analog values are quantized, and replays restore numbers as ints.
 var payload: Dictionary
 ## Arrival order inside a tick, set by CommandBuffer. Used only as a tiebreak.
 var seq: int = 0

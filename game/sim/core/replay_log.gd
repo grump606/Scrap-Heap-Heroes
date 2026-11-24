@@ -1,10 +1,12 @@
 ## Everything needed to replay a match exactly: seed, versions, slots (with
 ## spawns), every command, and state hashes to catch desyncs. File IO lives in
-## the app layer; this class is plain data and survives a JSON round trip.
+## the app layer; this class is plain data and survives a JSON round trip:
+## from_dict restores the ints JSON turns into floats, and the seed is stored
+## as a string because JSON numbers lose precision above 2^53.
 class_name ReplayLog
 extends RefCounted
 
-const FORMAT_VERSION := 2
+const FORMAT_VERSION := 3
 ## A state hash is recorded every this many ticks.
 const HASH_INTERVAL := 60
 
@@ -79,7 +81,7 @@ func commands_for_player(player_id: int) -> Dictionary:
 func to_dict() -> Dictionary:
 	return {
 		"format": FORMAT_VERSION,
-		"seed": match_seed,
+		"seed": str(match_seed),
 		"game_version": game_version,
 		"data_version": data_version,
 		"slots": slots.duplicate(true),
@@ -97,12 +99,32 @@ static func from_dict(d: Dictionary) -> ReplayLog:
 		push_warning("replay format %d not supported (expected %d)" % [format, FORMAT_VERSION])
 		return null
 	var r := ReplayLog.new()
-	r.match_seed = int(d["seed"])
+	r.match_seed = str(d["seed"]).to_int()
 	r.game_version = str(d.get("game_version", ""))
 	r.data_version = int(d.get("data_version", 0))
-	r.slots = d.get("slots", []).duplicate(true)
-	r.commands = d.get("commands", []).duplicate(true)
-	r.hashes = d.get("hashes", []).duplicate(true)
+	for s in d.get("slots", []):
+		var sp: Array = s["spawn"]
+		r.slots.append({
+			"player_id": int(s["player_id"]),
+			"team": int(s["team"]),
+			"hero_id": str(s["hero_id"]),
+			"spawn": [float(sp[0]), float(sp[1]), float(sp[2])],
+		})
+	for c in d.get("commands", []):
+		r.commands.append(_normalized_command(c))
+	for e in d.get("hashes", []):
+		r.hashes.append([int(e[0]), str(e[1])])
 	r.final_tick = int(d.get("final_tick", 0))
 	r.final_hash = str(d.get("final_hash", ""))
 	return r
+
+
+## Command payloads hold only quantized integers (see Command), so any number
+## in one is restored to int.
+static func _normalized_command(c: Dictionary) -> Dictionary:
+	var payload := {}
+	var src: Dictionary = c.get("payload", {})
+	for k in src:
+		var v: Variant = src[k]
+		payload[str(k)] = int(v) if (v is float or v is int) else v
+	return {"player_id": int(c["player_id"]), "tick": int(c["tick"]), "type": int(c["type"]), "payload": payload}

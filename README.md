@@ -28,6 +28,8 @@ The design and architecture reference is the
   ```
   The import step builds the `.godot/` class cache. It isn't committed, so a
   fresh checkout (or CI) needs it before the tests can resolve `class_name`s.
+  On Godot 4.5+ a test that hits a script error, `push_error` or failed
+  `assert` counts as failed; older engines only catch failed checks.
 
 ## How a tick works
 

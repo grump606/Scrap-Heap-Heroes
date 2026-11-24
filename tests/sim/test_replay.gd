@@ -39,6 +39,21 @@ func test_replay_survives_json() -> void:
 	check_eq(re.desync_tick, -1, "no desync reported")
 
 
+func test_json_round_trip_is_exact() -> void:
+	var live := _recorded(23)
+	var before := live.replay.to_dict()
+	var after := ReplayLog.from_dict(JSON.parse_string(JSON.stringify(before))).to_dict()
+	# var_to_str tells 5 from 5.0, which == does not.
+	check_eq(var_to_str(after), var_to_str(before), "same data and types after JSON")
+
+
+func test_large_seed_survives_json() -> void:
+	var r := ReplayLog.new()
+	r.match_seed = 9007199254740993  # 2^53 + 1: not representable as a JSON number
+	var back := ReplayLog.from_dict(JSON.parse_string(JSON.stringify(r.to_dict())))
+	check_eq(back.match_seed, r.match_seed, "seed exact after JSON")
+
+
 func test_tampered_replay_reports_desync() -> void:
 	var live := _recorded(5)
 	var saved := ReplayLog.from_dict(live.replay.to_dict())

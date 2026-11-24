@@ -20,9 +20,19 @@ func _init(p_seed: int) -> void:
 		_streams[s] = r
 
 
-## Mixes a base seed with a stream id. Deterministic on every platform.
+## Mixes a base seed with a stream id: the first 8 bytes of SHA-256 over both.
+## Nearby seeds or stream ids give unrelated results, no two (seed, stream)
+## pairs collide in practice, and there is no integer overflow to worry about.
+## Deterministic on every platform.
 static func derive_seed(p_seed: int, stream_id: int) -> int:
-	return p_seed + (stream_id + 1) * 1000003
+	var bytes := PackedByteArray()
+	bytes.resize(16)
+	bytes.encode_s64(0, p_seed)
+	bytes.encode_s64(8, stream_id)
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(bytes)
+	return ctx.finish().decode_s64(0)
 
 
 func randf_in(stream: int, lo: float, hi: float) -> float:
