@@ -1,0 +1,11 @@
+# Godot
+# .import and .uid files next to assets hold their import settings and ids: commit them.
+.godot/
+/android/
+export/
+# Can hold signing passwords.
+export_presets.cfg
+
+# OS
+Thumbs.db
+.DS_Store
