@@ -51,7 +51,7 @@ func setup(p_entity_id: int, team: int) -> void:
 	add_child(_label)
 
 
-func render(prev: Dictionary, cur: Dictionary, alpha: float, tick: int) -> void:
+func render(prev: Dictionary, cur: Dictionary, alpha: float, tick: int, _snap: Snapshot = null) -> void:
 	visible = not cur.get("dead", false)
 	if not visible:
 		return

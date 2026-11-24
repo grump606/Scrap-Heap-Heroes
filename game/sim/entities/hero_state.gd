@@ -15,9 +15,6 @@ var def: HeroDef
 var spawn: Vector3 = Vector3.ZERO
 var form: int = Form.PET
 var mech_energy: float = 0.0
-var move_speed: float
-## Latest move intent from commands, held until the next MOVE command.
-var move_input: Vector2 = Vector2.ZERO
 ## First tick a form switch is allowed again.
 var switch_ready_tick: int = 0
 ## Form asked for this tick by a SWITCH_FORM command; FormSystem consumes it.
@@ -26,6 +23,8 @@ var respawn_tick: int = 0
 ## First tick each ability slot can be used again, per form.
 var pet_ready: Array[int] = []
 var mech_ready: Array[int] = []
+## First tick the basic attack can be used again (shared by both forms).
+var attack_ready: int = 0
 ## Ability presses this tick: [{slot, aim: Vector2}]; AbilitySystem consumes them.
 var ability_requests: Array = []
 ## The contact dash in progress (Wall Crush), or null.
@@ -62,11 +61,12 @@ func to_dict() -> Dictionary:
 		"respawn_tick": respawn_tick,
 		"pet_ready": pet_ready.duplicate(),
 		"mech_ready": mech_ready.duplicate(),
+		"attack_ready": attack_ready,
 	})
 	return d
 
 
 func hash_fields() -> Array:
-	return super() + [player_id, String(hero_id), spawn, form, mech_energy, move_speed,
-		move_input, switch_ready_tick, form_request, respawn_tick, pet_ready, mech_ready,
+	return super() + [player_id, String(hero_id), spawn, form, mech_energy,
+		switch_ready_tick, form_request, respawn_tick, pet_ready, mech_ready, attack_ready,
 		ability_requests, String(dash_ability.id) if dash_ability != null else ""]

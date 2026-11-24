@@ -26,6 +26,12 @@ var forced_until: int = 0
 var slam_damage: int = 0
 var slam_stun_ticks: int = 0
 var slam_source: int = 0
+## Steering for units that walk (heroes, minions): a direction of length <= 1
+## and a top speed. Units with move_speed 0 only coast.
+var move_input: Vector2 = Vector2.ZERO
+var move_speed: float = 0.0
+## Structures never move and ignore knockback.
+var immovable: bool = false
 
 
 func is_forced(tick: int) -> bool:
@@ -55,4 +61,5 @@ func to_dict() -> Dictionary:
 ## Fields in a fixed order, for hashing. Subclasses append theirs.
 func hash_fields() -> Array:
 	return [entity_id, team, position, velocity, facing, hp, max_hp, radius, dead,
-		statuses, forced_velocity, forced_until, slam_damage, slam_stun_ticks, slam_source]
+		statuses, forced_velocity, forced_until, slam_damage, slam_stun_ticks, slam_source,
+		move_input, move_speed]

@@ -14,6 +14,7 @@ const TEST_FILES := [
 	"res://tests/sim/test_replay.gd",
 	"res://tests/sim/test_forms.gd",
 	"res://tests/sim/test_core_kit.gd",
+	"res://tests/sim/test_match_loop.gd",
 	"res://tests/sim/test_sim_isolation.gd",
 	"res://tests/sim/test_sim_rng.gd",
 ]

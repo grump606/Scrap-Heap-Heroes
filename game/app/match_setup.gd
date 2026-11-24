@@ -11,6 +11,8 @@ var match_seed: int
 var rules: MatchRules
 ## [{player_id, team, hero_def: HeroDef, kind, spawn}]
 var slots: Array = []
+## Towers, cores and minion waves (a real match) or not (practice).
+var lane_objectives: bool = false
 ## Training dummy positions.
 var dummies: Array[Vector3] = []
 ## Where REPLAY slots get their commands. Null for a live match.
@@ -44,8 +46,31 @@ static func practice(p_seed: int, p_rules: MatchRules) -> MatchSetup:
 		{"player_id": 1, "team": 0, "hero_def": hero_def(&"wombat"), "kind": SlotKind.HUMAN, "spawn": Vector3(-5, 0, 5)},
 		{"player_id": 2, "team": 1, "hero_def": hero_def(&"weasel"), "kind": SlotKind.BOT, "spawn": Vector3(5, 0, -5)},
 	]
-	# One dummy in the open, one by the north wall for Wall Crush.
-	s.dummies = [Vector3(0, 0, -4), Vector3(-6, 0, -17)]
+	# One dummy in the open, one by the west wall for Wall Crush.
+	s.dummies = [Vector3(0, 0, -4), Vector3(-8.5, 0, -1)]
+	return s
+
+
+## A 3v3 match on the lane: you (Wombat) with a Weasel and a Wombat bot,
+## against the same three as bots. Players 1-3 are team 0, 4-6 team 1.
+static func match_3v3(p_seed: int, p_rules: MatchRules) -> MatchSetup:
+	var s := MatchSetup.new()
+	s.match_seed = p_seed
+	s.rules = p_rules
+	s.lane_objectives = true
+	var lineup := [&"wombat", &"weasel", &"wombat"]
+	var xs := [0.0, -3.0, 3.0]
+	for team in [0, 1]:
+		var z := p_rules.hero_spawn_z * MatchRules.team_side(team)
+		for i in 3:
+			var human: bool = team == 0 and i == 0
+			s.slots.append({
+				"player_id": team * 3 + i + 1,
+				"team": team,
+				"hero_def": hero_def(lineup[i]),
+				"kind": SlotKind.HUMAN if human else SlotKind.BOT,
+				"spawn": Vector3(xs[i], 0, z),
+			})
 	return s
 
 
@@ -60,6 +85,7 @@ static func from_replay(replay: ReplayLog, p_rules: MatchRules) -> MatchSetup:
 	s.match_seed = replay.match_seed
 	s.rules = p_rules
 	s.replay_source = replay
+	s.lane_objectives = replay.lane_objectives
 	for slot in replay.slots:
 		var sp: Array = slot["spawn"]
 		var def := hero_def(StringName(slot["hero_id"]))

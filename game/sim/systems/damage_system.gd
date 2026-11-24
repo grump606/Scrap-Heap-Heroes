@@ -3,6 +3,9 @@
 ## reduction = passive flat value (doubled in mech form) + ARMOR buffs,
 ##             0 while VULNERABLE; ultimates ignore part of it.
 ## dealt     = max(amount - reduction, ceil(amount * damage_floor_fraction))
+##
+## Structures: only heroes damage them (mech form multiplies it by
+## mech_structure_multiplier), and a core takes nothing while its tower stands.
 class_name DamageSystem
 extends RefCounted
 
@@ -26,10 +29,27 @@ static func preview(world: SimWorld, u: UnitState, amount: int, ultimate: bool =
 	return maxi(amount - red, floor_amount)
 
 
+## The amount a hit from source does to a structure before reduction: 0 if
+## the source can't hurt it, more if a mech hero is hitting.
+static func structure_amount(world: SimWorld, source_id: int, s: StructureState, amount: int) -> int:
+	var src := world.unit(source_id)
+	if not (src is HeroState):
+		return 0
+	if s.kind == StructureState.Kind.CORE and world.structure(s.team, StructureState.Kind.TOWER) != null:
+		return 0
+	if src.form == HeroState.Form.MECH:
+		return int(amount * world.rules.mech_structure_multiplier)
+	return amount
+
+
 ## Deals the hit and returns the damage done. Death is handled by MatchFlowSystem.
 static func deal(world: SimWorld, source_id: int, target: UnitState, amount: int, ultimate: bool = false) -> int:
-	if target.dead or amount <= 0:
-		return 0
+	if target.dead or target.hp <= 0 or amount <= 0:
+		return 0  # Already down this tick; MatchFlowSystem finishes it off.
+	if target is StructureState:
+		amount = structure_amount(world, source_id, target, amount)
+		if amount <= 0:
+			return 0
 	var dealt := preview(world, target, amount, ultimate)
 	target.hp = maxi(target.hp - dealt, 0)
 	if target is DummyState:

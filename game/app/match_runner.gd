@@ -7,6 +7,9 @@ class_name MatchRunner
 extends Node3D
 
 @export var match_seed: int = 12345
+## Practice: you and a wandering bot with training dummies, no structures.
+## Otherwise a full 3v3 lane match with bots.
+@export var practice: bool = false
 ## Catch-up cap after a long frame or alt-tab (prevents the spiral of death).
 ## Frame pacing only: it never changes what the sim computes, so it isn't in MatchRules.
 @export var max_ticks_per_frame: int = 5
@@ -20,7 +23,12 @@ var _hud: Hud
 
 
 func _ready() -> void:
-	start_match(MatchSetup.practice(match_seed, MatchSetup.default_rules()))
+	_start_new()
+
+
+func _start_new() -> void:
+	var rules := MatchSetup.default_rules()
+	start_match(MatchSetup.practice(match_seed, rules) if practice else MatchSetup.match_3v3(match_seed, rules))
 
 
 func start_match(setup: MatchSetup) -> void:
@@ -29,7 +37,7 @@ func start_match(setup: MatchSetup) -> void:
 
 	_world_view = WorldView.new()
 	add_child(_world_view)
-	_world_view.build_arena(setup.rules.arena_half_size)
+	_world_view.build_arena(setup.rules.arena_half_width, setup.rules.arena_half_length)
 	_camera = CameraRig.new()
 	add_child(_camera)
 
@@ -54,6 +62,22 @@ func _process(delta: float) -> void:
 	_world_view.show_events(session.take_events(), session.cur_snapshot, session.world.tick_dt)
 	if _hud != null:
 		_hud.update(session.cur_snapshot.hero_for_player(session.local.player_id), session.cur_snapshot.tick)
+		_hud.update_match(session.cur_snapshot, session.local.team)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if session != null and session.world.winner != SimWorld.NO_WINNER and event.is_action_pressed("ui_accept"):
+		restart()
+
+
+## Throws the current match away and starts a fresh one with a new seed.
+func restart() -> void:
+	session.finish()
+	for child in get_children():
+		child.queue_free()
+	_hud = null
+	match_seed += 1
+	_start_new()
 
 
 func _exit_tree() -> void:

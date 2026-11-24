@@ -20,9 +20,14 @@ func show_events(events: Array[SimEvent], snap: Snapshot, tick_dt: float) -> voi
 				var h: Dictionary = snap.heroes.get(e.entity_id, {})
 				if not h.is_empty():
 					_float_text(h["position"] + Vector3(0, 2.5, 0), "EJECT!", Color(1, 0.3, 0.3), 56)
+			SimEvent.Type.SHOT:
+				_beam(Vector3(e.data["x"], 4.4, e.data["z"]), Vector3(e.data["tx"], 0.8, e.data["tz"]))
 			SimEvent.Type.AREA:
 				var center := Vector3(e.data["x"], 0.05, e.data["z"])
-				if e.data["shape"] == "cone":
+				if e.data["shape"] == "swipe":
+					_flash(_cone_mesh(e.data["radius"], e.data["angle"]), center,
+						atan2(-e.data["ax"], -e.data["az"]), Color(1, 1, 1, 0.18), 0.15)
+				elif e.data["shape"] == "cone":
 					_flash(_cone_mesh(e.data["radius"], e.data["angle"]), center,
 						atan2(-e.data["ax"], -e.data["az"]), AREA_COLOR, 0.35)
 				else:
@@ -34,6 +39,29 @@ func show_events(events: Array[SimEvent], snap: Snapshot, tick_dt: float) -> voi
 					var p: Vector3 = h["position"]
 					_flash(_disc_mesh(e.data["radius"]), Vector3(p.x, 0.04, p.z), 0.0, TELEGRAPH_COLOR,
 						int(e.data["windup"]) * tick_dt)
+
+
+func _beam(from: Vector3, to: Vector3) -> void:
+	var length := from.distance_to(to)
+	if length < 0.01:
+		return
+	var m := MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = 0.08
+	c.bottom_radius = 0.08
+	c.height = length
+	m.mesh = c
+	var mat := ViewParts.glow(Color(1.0, 0.9, 0.5, 0.9))
+	m.material_override = mat
+	add_child(m)
+	m.global_position = (from + to) * 0.5
+	var dir := (to - from).normalized()
+	var axis := Vector3.UP.cross(dir)
+	if axis.length() > 0.0001:
+		m.global_basis = Basis(axis.normalized(), Vector3.UP.angle_to(dir))
+	var tw := m.create_tween()
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.25)
+	tw.tween_callback(m.queue_free)
 
 
 func _float_text(at: Vector3, text: String, color: Color, size: int) -> void:

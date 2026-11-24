@@ -8,7 +8,7 @@ extends RefCounted
 ## the push took. slam_damage/slam_stun_ticks are paid if the push hits a wall.
 static func push(world: SimWorld, target: UnitState, dir: Vector2, speed: float, ticks: int,
 		slam_damage: int = 0, slam_stun_ticks: int = 0, source_id: int = 0) -> bool:
-	if target.dead or ticks <= 0 or speed <= 0.0:
+	if target.dead or target.immovable or ticks <= 0 or speed <= 0.0:
 		return false
 	if Status.active(target, Status.Kind.ROOTED, world.tick):
 		return false

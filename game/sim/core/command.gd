@@ -40,7 +40,11 @@ static func switch_form(p_player_id: int, p_tick: int, form: int) -> Command:
 	return Command.new(p_player_id, p_tick, Type.SWITCH_FORM, {"form": form})
 
 
-## Uses an ability slot of the hero's current form. aim is a world XZ
+## Ability slot that means "basic attack" (HeroDef.attack(form)).
+const ATTACK_SLOT := -1
+
+
+## Uses an ability slot of the hero's current form (or ATTACK_SLOT). aim is a world XZ
 ## direction (from the camera); it is normalized and quantized like moves.
 static func ability(p_player_id: int, p_tick: int, slot: int, aim: Vector2) -> Command:
 	var a := aim.normalized() if aim.length_squared() > 0.000001 else Vector2.ZERO

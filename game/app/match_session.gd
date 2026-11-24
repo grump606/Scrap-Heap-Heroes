@@ -40,6 +40,9 @@ func _init(p_setup: MatchSetup) -> void:
 	for at in setup.dummies:
 		world.add_dummy(at)
 		replay.add_dummy(at)
+	if setup.lane_objectives:
+		world.add_lane_objectives()
+		replay.lane_objectives = true
 
 	cur_snapshot = world.snapshot()
 	prev_snapshot = cur_snapshot
@@ -99,7 +102,7 @@ func _make_controller(slot: Dictionary) -> Controller:
 			local = LocalPlayerController.new(pid, team)
 			return local
 		MatchSetup.SlotKind.BOT:
-			return BotController.new(pid, team, setup.match_seed, setup.rules.arena_half_size)
+			return BotController.new(pid, team, setup.match_seed, setup.rules, slot["hero_def"])
 		MatchSetup.SlotKind.REPLAY:
 			assert(setup.replay_source != null, "REPLAY slot needs setup.replay_source")
 			return ReplayController.new(pid, team, setup.replay_source)

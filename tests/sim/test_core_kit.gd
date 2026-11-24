@@ -11,7 +11,7 @@ var wombat: HeroDef = MatchSetup.hero_def(&"wombat")
 
 ## A world with Wombat (player 1, team 0) at the origin and an enemy test
 ## hero (player 2, team 1) parked out of the way. Spawn events flushed.
-func _world(enemy_at: Vector3 = Vector3(15, 0, 15)) -> SimWorld:
+func _world(enemy_at: Vector3 = Vector3(8, 0, 15)) -> SimWorld:
 	var w := SimWorld.new(1, MatchSetup.default_rules())
 	w.add_hero(1, 0, wombat, Vector3.ZERO)
 	var foe := HeroDef.new()
@@ -174,7 +174,7 @@ func test_rump_bump_spares_allies() -> void:
 
 func test_wall_crush_slams_into_the_wall() -> void:
 	var w := _world()
-	var half := w.rules.arena_half_size
+	var half := w.rules.arena_half_length
 	_me(w).position = Vector3(0, 0, -half + 6)
 	var near_wall := w.add_dummy(Vector3(0, 0, -half + 3.5))
 	var a := _ability(MECH, &"wall_crush")
@@ -202,7 +202,7 @@ func test_wall_crush_in_the_open_has_no_slam() -> void:
 func test_slam_stuns_and_stun_blocks_casting() -> void:
 	var w := _world()
 	var foe := w.hero_for_player(2)
-	var half := w.rules.arena_half_size
+	var half := w.rules.arena_half_width
 	foe.position = Vector3(half - 1.0, 0, 0)
 	KnockbackSystem.push(w, foe, Vector2(1, 0), 10.0, 30, 50, _secs(w, 1.0), _me(w).entity_id)
 	_run(w, 10)

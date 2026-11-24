@@ -29,7 +29,7 @@ func setup(p_entity_id: int) -> void:
 	add_child(_label)
 
 
-func render(prev: Dictionary, cur: Dictionary, alpha: float, tick: int) -> void:
+func render(prev: Dictionary, cur: Dictionary, alpha: float, tick: int, _snap: Snapshot = null) -> void:
 	var a: Vector3 = prev.get("position", cur["position"])
 	position = a.lerp(cur["position"], alpha)
 	_label.text = "%d / %d%s" % [cur["hp"], cur["max_hp"], HeroView.status_text(cur.get("statuses", []), tick)]

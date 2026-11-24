@@ -21,16 +21,26 @@ static func run(world: SimWorld) -> void:
 
 
 static func _try_cast(world: SimWorld, h: HeroState, slot: int, aim: Vector2) -> void:
-	var list := h.def.abilities(h.form)
-	if slot < 0 or slot >= list.size():
+	var def: AbilityDef
+	var ready_at: int
+	if slot == Command.ATTACK_SLOT:
+		def = h.def.attack(h.form)
+		ready_at = h.attack_ready
+	else:
+		var list := h.def.abilities(h.form)
+		if slot < 0 or slot >= list.size():
+			return
+		def = list[slot]
+		ready_at = h.ready_for(h.form)[slot]
+	if def == null or world.tick < ready_at or not Status.can_act(h, world.tick) 			or world.has_pending_cast(h.entity_id):
 		return
-	var ready := h.ready_for(h.form)
-	if world.tick < ready[slot] or not Status.can_act(h, world.tick) or world.has_pending_cast(h.entity_id):
-		return
-	var def := list[slot]
 	if aim.length_squared() < 0.000001:
 		aim = Vector2(-sin(h.facing), -cos(h.facing))
-	ready[slot] = world.tick + world.rules.seconds_to_ticks(def.cooldown)
+	var next := world.tick + world.rules.seconds_to_ticks(def.cooldown)
+	if slot == Command.ATTACK_SLOT:
+		h.attack_ready = next
+	else:
+		h.ready_for(h.form)[slot] = next
 	h.facing = atan2(-aim.x, -aim.y)
 	var windup := world.rules.seconds_to_ticks(def.windup)
 	world.emit(SimEvent.new(SimEvent.Type.ABILITY_CAST, world.tick, h.entity_id, {

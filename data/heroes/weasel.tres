@@ -1,6 +1,8 @@
-[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="HeroDef" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://game/sim/entities/hero_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/abilities/pet_attack.tres" id="pa"]
+[ext_resource type="Resource" path="res://data/abilities/mech_attack.tres" id="ma"]
 
 [resource]
 script = ExtResource("1")
@@ -12,3 +14,5 @@ pet_move_speed = 8.0
 mech_move_speed = 5.5
 pet_radius = 0.45
 mech_radius = 0.75
+pet_attack = ExtResource("pa")
+mech_attack = ExtResource("ma")

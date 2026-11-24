@@ -18,6 +18,9 @@ enum Role { TANK = 0, DAMAGE = 1, SUPPORT = 2 }
 ## Passive flat damage reduction per hit (Wombat's Heavy Hide). Mech form
 ## multiplies it by MatchRules.mech_reduction_multiplier.
 @export var flat_reduction: int = 0
+## Basic attacks: pet form's is light, mech form's hits hard.
+@export var pet_attack: AbilityDef
+@export var mech_attack: AbilityDef
 ## Pet form: two utility skills.
 @export var pet_abilities: Array[AbilityDef] = []
 ## Mech form: three combat skills, then the ultimate in the last slot.
@@ -30,6 +33,10 @@ func move_speed(form: int) -> float:
 
 func radius(form: int) -> float:
 	return mech_radius if form == HeroState.Form.MECH else pet_radius
+
+
+func attack(form: int) -> AbilityDef:
+	return mech_attack if form == HeroState.Form.MECH else pet_attack
 
 
 func abilities(form: int) -> Array[AbilityDef]:

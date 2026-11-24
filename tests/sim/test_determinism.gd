@@ -75,12 +75,13 @@ func test_unchanged_moves_are_not_repeated() -> void:
 
 func test_heroes_stay_in_arena() -> void:
 	var h := SimHarness.practice(3)
-	var half := h.world.rules.arena_half_size
+	var hx := h.world.rules.arena_half_width
+	var hz := h.world.rules.arena_half_length
 	for i in 20:
 		h.run(100)
 		for id in h.world.heroes:
 			var p: Vector3 = h.world.heroes[id].position
-			check(absf(p.x) <= half and absf(p.z) <= half, "hero %d inside arena at tick %d" % [id, h.world.tick])
+			check(absf(p.x) <= hx and absf(p.z) <= hz, "hero %d inside arena at tick %d" % [id, h.world.tick])
 
 
 func test_second_hero_for_same_player_is_refused() -> void:

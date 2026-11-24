@@ -7,36 +7,53 @@ var effects := EffectsView.new()
 
 var _hero_views: Dictionary = {}  # entity_id -> HeroView
 var _dummy_views: Dictionary = {}  # entity_id -> DummyView
+var _minion_views: Dictionary = {}  # entity_id -> MinionView
+var _structure_views: Dictionary = {}  # entity_id -> StructureView
 
 
 func _ready() -> void:
 	add_child(effects)
 
 
-func build_arena(half_size: float) -> void:
+func build_arena(half_width: float, half_length: float) -> void:
 	var floor_mesh := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(half_size * 2.0, half_size * 2.0)
+	plane.size = Vector2(half_width * 2.0, half_length * 2.0)
 	floor_mesh.mesh = plane
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.45, 0.42, 0.38)
 	floor_mesh.material_override = mat
 	add_child(floor_mesh)
 
-	# Low walls on the edge the sim clamps heroes to, so the boundary is visible.
+	# Team-tinted ground at each end so the bases read at a glance.
+	for team in [0, 1]:
+		var base := MeshInstance3D.new()
+		var p := PlaneMesh.new()
+		p.size = Vector2(half_width * 2.0, 12.0)
+		base.mesh = p
+		base.position = Vector3(0, 0.01, (half_length - 6.0) * MatchRules.team_side(team))
+		var bm := StandardMaterial3D.new()
+		bm.albedo_color = HeroView.TEAM_COLORS[team].lerp(Color(0.45, 0.42, 0.38), 0.75)
+		base.material_override = bm
+		add_child(base)
+
+	# Low walls on the edge the sim clamps units to, so the boundary is visible.
 	var wall_mat := StandardMaterial3D.new()
 	wall_mat.albedo_color = Color(0.36, 0.33, 0.3)
 	var t := 0.5
 	var h := 0.8
-	var long := half_size * 2.0 + t * 2.0
 	for side in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
 		var wall := MeshInstance3D.new()
 		var box := BoxMesh.new()
-		box.size = Vector3(t, h, long) if side.x != 0 else Vector3(long, h, t)
+		if side.x != 0:
+			box.size = Vector3(t, h, half_length * 2.0 + t * 2.0)
+			wall.position = side * (half_width + t * 0.5)
+		else:
+			box.size = Vector3(half_width * 2.0 + t * 2.0, h, t)
+			wall.position = side * (half_length + t * 0.5)
+		wall.position.y = h * 0.5
 		wall.mesh = box
 		wall.material_override = wall_mat
-		# Inner face sits on the clamp line; a hero's body may overlap it slightly.
-		wall.position = side * (half_size + t * 0.5) + Vector3(0, h * 0.5, 0)
 		add_child(wall)
 
 	var sun := DirectionalLight3D.new()
@@ -56,15 +73,25 @@ func build_arena(half_size: float) -> void:
 ## prev and cur are the snapshots from the last two ticks; alpha is how far
 ## the clock is between them.
 func render(prev: Snapshot, cur: Snapshot, alpha: float) -> void:
-	_sync(_hero_views, prev.heroes if prev != null else {}, cur.heroes, alpha, cur.tick,
+	_sync(_hero_views, prev.heroes if prev != null else {}, cur.heroes, alpha, cur,
 		func(id, d):
 			var v := HeroView.new()
 			v.setup(id, d["team"])
 			return v)
-	_sync(_dummy_views, prev.dummies if prev != null else {}, cur.dummies, alpha, cur.tick,
+	_sync(_dummy_views, prev.dummies if prev != null else {}, cur.dummies, alpha, cur,
 		func(id, _d):
 			var v := DummyView.new()
 			v.setup(id)
+			return v)
+	_sync(_minion_views, prev.minions if prev != null else {}, cur.minions, alpha, cur,
+		func(id, d):
+			var v := MinionView.new()
+			v.setup(id, d["team"])
+			return v)
+	_sync(_structure_views, {}, cur.structures, alpha, cur,
+		func(id, d):
+			var v := StructureView.new()
+			v.setup(id, d["team"], d["kind"], d["radius"])
 			return v)
 
 
@@ -77,14 +104,14 @@ func hero_view(entity_id: int) -> HeroView:
 
 
 ## Creates, updates and removes one kind of view to match the snapshot.
-func _sync(views: Dictionary, prev: Dictionary, cur: Dictionary, alpha: float, tick: int, make: Callable) -> void:
+func _sync(views: Dictionary, prev: Dictionary, cur: Dictionary, alpha: float, snap: Snapshot, make: Callable) -> void:
 	for id in cur:
 		var d: Dictionary = cur[id]
 		if not views.has(id):
 			var v: Node3D = make.call(id, d)
 			add_child(v)
 			views[id] = v
-		views[id].render(prev.get(id, d), d, alpha, tick)
+		views[id].render(prev.get(id, d), d, alpha, snap.tick, snap)
 	for id in views.keys():
 		if not cur.has(id):
 			views[id].queue_free()

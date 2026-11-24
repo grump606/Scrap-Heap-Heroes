@@ -15,6 +15,14 @@ static func practice(p_seed: int, human_slot_uses_local_controller: bool = false
 	return MatchSession.new(setup)
 
 
+## A 3v3 lane match. By default all six are bots.
+static func match_3v3(p_seed: int, human_slot_uses_local_controller: bool = false) -> MatchSession:
+	var setup := MatchSetup.match_3v3(p_seed, MatchSetup.default_rules())
+	if not human_slot_uses_local_controller:
+		setup.slots[0]["kind"] = MatchSetup.SlotKind.BOT
+	return MatchSession.new(setup)
+
+
 ## Plays a recorded match back from a replay. Null if the replay is rejected.
 static func playback(replay: ReplayLog) -> MatchSession:
 	var setup := MatchSetup.from_replay(replay, MatchSetup.default_rules())

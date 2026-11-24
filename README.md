@@ -18,13 +18,18 @@ The design and architecture reference is the
 
 ## Run
 
-- Play: open the folder in Godot and press F5. WASD moves the blue hero,
-  right-click captures the mouse to turn the camera, Esc releases it,
-  F switches between pet and mech form (2 s cooldown, mech needs 30 energy).
-  Q / E use the pet skills; in mech form Q / E / R are the three skills and
-  X the ultimate. Abilities aim where the camera looks. Two training dummies
-  stand in the arena; one sits by the north wall for Wall Crush.
-  The orange hero is a bot that goes through the same command system.
+- Play: open the folder in Godot and press F5. You start a 3v3 match as the
+  blue Wombat, with a Weasel and a Wombat bot against three orange bots.
+  Destroy the enemy tower, then their Power Core (shielded until its tower
+  falls). Minions walk the lane every 25 s; they soak tower shots but can't
+  hurt structures. Heal behind your own core. Enter starts a new match once
+  one ends. Tick `practice` on the Main node for the old sandbox: you, a
+  wandering bot and two training dummies.
+- Controls: WASD moves, right-click captures the mouse to turn the camera,
+  Esc releases it. Left-click attacks (hold to keep swinging). F switches
+  between pet and mech form (2 s cooldown, mech needs 30 energy). Q / E use
+  the pet skills; in mech form Q / E / R are the three skills and X the
+  ultimate. Attacks and abilities aim where the camera looks.
 - Tests:
   ```
   godot --headless --path . --import

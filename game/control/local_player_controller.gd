@@ -16,9 +16,13 @@ var input_enabled: bool = true:
 		input_enabled = v
 		if not v:
 			_switch_pressed = false
+			_attack_held = false
 			_ability_presses.clear()
 
 var _switch_pressed := false
+## Basic attack: held, so it repeats at its own cooldown.
+var _attack_held := false
+var _attack_aim := Vector2.ZERO
 ## slot -> aim at the moment of the press.
 var _ability_presses: Dictionary = {}
 
@@ -31,6 +35,7 @@ func poll_frame_input() -> void:
 		return
 	if Input.is_action_just_pressed("switch_form"):
 		request_switch()
+	hold_attack(Input.is_action_pressed("attack"), camera_forward())
 	for slot in ABILITY_ACTIONS.size():
 		if Input.is_action_just_pressed(ABILITY_ACTIONS[slot]):
 			request_ability(slot, camera_forward())
@@ -39,6 +44,13 @@ func poll_frame_input() -> void:
 ## Queues one form switch for the next tick. Tests call this directly.
 func request_switch() -> void:
 	_switch_pressed = true
+
+
+## Holding the attack button: an attack goes out whenever the snapshot says
+## it is ready, so held attacks don't send a command every tick. Tests call this.
+func hold_attack(held: bool, aim: Vector2) -> void:
+	_attack_held = held
+	_attack_aim = aim
 
 
 ## Queues one ability press for the next tick. Tests call this directly.
@@ -61,6 +73,8 @@ func produce_commands(snapshot: Snapshot, tick: int) -> Array[Command]:
 		_switch_pressed = false
 		if not me.is_empty():
 			out.append(Command.switch_form(player_id, tick, HeroState.other_form(me["form"])))
+	if _attack_held and not me.is_empty() and not me["dead"] and tick >= int(me["attack_ready"]):
+		out.append(Command.ability(player_id, tick, Command.ATTACK_SLOT, _attack_aim))
 	var slots := _ability_presses.keys()
 	slots.sort()
 	for slot in slots:

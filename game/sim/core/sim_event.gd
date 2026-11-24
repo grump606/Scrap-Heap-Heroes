@@ -12,7 +12,9 @@ enum Type {
 	ABILITY_CAST = 5,   ## data: ability, slot, windup (ticks)
 	EJECT = 6,          ## empty meter forced the hero out of mech form
 	WALL_SLAM = 7,      ## data: amount, x, z
-	AREA = 8,           ## an area effect landed. data: shape ("ring"/"cone"), x, z, radius, ax, az, angle
+	AREA = 8,           ## an area effect landed. data: shape ("ring"/"cone"/"swipe"), x, z, radius, ax, az, angle
+	SHOT = 9,           ## a tower fired. data: x, z (tower), tx, tz (target)
+	MATCH_END = 10,     ## a core fell. data: winner
 }
 
 var type: int

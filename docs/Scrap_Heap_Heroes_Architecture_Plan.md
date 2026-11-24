@@ -4,7 +4,7 @@ Nov 23, 2026 · @Grump606
 
 ## Status and decisions
 
-The first build step is done (Nov 24, 2026): the folder structure, the sim core, the headless determinism and replay tests, and a local and a bot controller sharing one command buffer. The Foundation phase is done too: an enclosed arena, the third-person camera, and pet/mech form switching with a cooldown and per-hero, per-form move speeds (`data/heroes/*.tres`), with placeholder art for both forms. The Core kit is done as well: the mech meter (drain, refill, eject into a vulnerable state), damage with flat reduction and a floor, timed statuses, knockback with wall slams, dashes, windups, death and respawn, training dummies, a HUD, and Wombat's full kit as the first data-driven abilities (`data/abilities/*.tres`, one script each in `game/sim/abilities/`). Next up is the match loop. The design is single-player first, built so multiplayer can be added later without a rewrite. It targets Godot 4.3 or later.
+The first build step is done (Nov 24, 2026): the folder structure, the sim core, the headless determinism and replay tests, and a local and a bot controller sharing one command buffer. The Foundation phase is done too: an enclosed arena, the third-person camera, and pet/mech form switching with a cooldown and per-hero, per-form move speeds (`data/heroes/*.tres`), with placeholder art for both forms. The Core kit is done as well: the mech meter (drain, refill, eject into a vulnerable state), damage with flat reduction and a floor, timed statuses, knockback with wall slams, dashes, windups, death and respawn, training dummies, a HUD, and Wombat's full kit as the first data-driven abilities (`data/abilities/*.tres`, one script each in `game/sim/abilities/`). The match loop is in too: a single enclosed lane with a tower and a Power Core per side, minion waves, basic attacks in both forms, base healing, a win condition, a match HUD, and 3v3 with bots that play the lane and use Wombat's kit. Next up is the first three heroes. The design is single-player first, built so multiplayer can be added later without a rewrite. It targets Godot 4.3 or later.
 
 This doc is the single primary reference for Scrap Heap Heroes: the game design (setting, match format, core mechanic and roster) comes first, then the technical architecture. It replaces the separate Roster Review draft. All gameplay numbers are placeholders for playtesting.
 
@@ -242,7 +242,7 @@ scrap-heap-heroes/
 │  │  │  ├─ dummy_state.gd        # training dummy
 │  │  │  ├─ hero_state.gd         # pos, vel, hp, form, mech_energy, cooldowns
 │  │  │  ├─ minion_state.gd
-│  │  │  ├─ tower_state.gd        # Tower + Power Core
+│  │  │  ├─ structure_state.gd    # Tower + Power Core
 │  │  │  └─ objective_state.gd    # salvage rig
 │  │  ├─ systems/                 # stateless functions over world state
 │  │  │  ├─ movement_system.gd
@@ -250,7 +250,8 @@ scrap-heap-heroes/
 │  │  │  ├─ form_system.gd        # pet/mech, meter, eject
 │  │  │  ├─ damage_system.gd      # flat reduction + floor
 │  │  │  ├─ knockback_system.gd
-│  │  │  ├─ minion_ai_system.gd
+│  │  │  ├─ minion_ai_system.gd   # waves, lane walking, fighting
+│  │  │  ├─ tower_system.gd       # towers shoot minions first
 │  │  │  └─ match_flow_system.gd  # phases, win condition, respawns
 │  │  └─ abilities/               # ability_def.gd, ability_registry.gd, one script per ability
 │  ├─ control/                    # turns intent into commands
@@ -289,7 +290,7 @@ Each gameplay entity has a data-only state in the sim and, where it is visible, 
 | Entity | Lives in | What it is |
 | --- | --- | --- |
 | Player (hero) | `sim/entities/hero_state.gd`, `view/hero_view.gd` | State holds position, velocity, health, form, mech energy, cooldowns, `player_id` and team. A player is a `player_id` plus a controller; humans and bots differ only in which controller feeds them. |
-| Enemy | `minion_state.gd`, `tower_state.gd`, enemy heroes | A MOBA has no AI-only monsters: enemies are the other team's heroes, minions, towers and Power Core. Minions run through `minion_ai_system`. |
+| Enemy | `minion_state.gd`, `structure_state.gd`, enemy heroes | A MOBA has no AI-only monsters: enemies are the other team's heroes, minions, towers and Power Core. Minions run through `minion_ai_system`. |
 | UI | `view/ui/` | Reads snapshots and events only and never edits sim state. A button press becomes a command, like any other input. |
 | Level manager | `match_flow_system` (sim), `match_runner` (app) | Split in two: the sim system owns phases, spawns, objective timers and win conditions; the runner loads the arena scene and wires everything together. |
 
@@ -370,7 +371,7 @@ After the first build step proves the architecture, the prototype builds three h
 1. **First build step (done):** the sim core, determinism test and two controllers described above.
 2. **Foundation (done):** one hero in one enclosed arena, third-person camera, and form switching. Switching is a command naming the target form; it applies only when the cooldown (`form_switch_cooldown`, 2 s placeholder) has passed, and a blocked request is dropped rather than queued. The meter, drain and eject come with the Core kit.
 3. **Core kit (done):** abilities, the energy meter with tunable values, and a training dummy. Built with Wombat's full kit. Mud Slide's faster scrap pickup waits for scrap.
-4. **Match loop:** minions, a tower, the Power Core, and basic bots that use the same command system as players.
+4. **Match loop (done):** minions, a tower, the Power Core, and basic bots that use the same command system as players. Decisions made for it: basic attacks in both forms (pet weak); both forms damage structures, mech form 1.5x; minions don't damage structures, they hold outside enemy towers and soak shots; a core is shielded while its tower stands; heroes heal only behind their own core; 3v3 with bots filling slots; one lane, pet-only routes later. Bot-only matches don't reliably finish within 15 minutes yet, so pacing needs playtest tuning.
 5. **First three heroes:** Wombat, Weasel, and Capybara, to test knockback, mobility, and healing.
 6. **Then add:** Rabbit, Owl, and Tortoise one at a time, balancing as you go.
 7. **Later:** networking tests, soft ring-outs, and the neutral salvage-rig objective.
