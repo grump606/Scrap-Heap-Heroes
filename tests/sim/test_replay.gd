@@ -57,16 +57,19 @@ func test_large_seed_survives_json() -> void:
 func test_tampered_replay_reports_desync() -> void:
 	var live := _recorded(5)
 	var saved := ReplayLog.from_dict(live.replay.to_dict())
-	# Flip one of player 2's moves partway through.
+	# Flip player 2's first move from tick 500 on (moves are sent only on change).
+	var changed_at := -1
 	for d in saved.commands:
-		if int(d["player_id"]) == 2 and int(d["tick"]) == 500:
+		if int(d["player_id"]) == 2 and int(d["tick"]) >= 500:
 			var x := int(d["payload"].get("x", 0))
 			d["payload"] = {"x": -Command.AXIS_MAX if x > 0 else Command.AXIS_MAX, "z": 0}
+			changed_at = int(d["tick"])
 			break
+	check(changed_at != -1, "found a command to change")
 	var re := SimHarness.playback(saved)
 	re.run(TICKS)
 	re.finish()
-	check(re.desync_tick > 500, "desync detected after the changed tick (got %d)" % re.desync_tick)
+	check(re.desync_tick > changed_at, "desync detected after tick %d (got %d)" % [changed_at, re.desync_tick])
 
 
 func test_replay_with_other_data_version_is_rejected() -> void:

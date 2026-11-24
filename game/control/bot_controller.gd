@@ -30,7 +30,7 @@ func produce_commands(snapshot: Snapshot, tick: int) -> Array[Command]:
 	var dir := (_waypoint - pos)
 	if dir.length() > 1.0:
 		dir = dir.normalized()
-	return [Command.move(player_id, tick, dir)]
+	return move_if_changed(tick, dir)
 
 
 func _pick_waypoint(tick: int) -> void:

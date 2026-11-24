@@ -35,6 +35,13 @@ func _process(delta: float) -> void:
 	global_position = global_position.lerp(target.global_position, t)
 
 
+## Jumps straight to the target, e.g. at match start, instead of easing in.
+func snap_to_target() -> void:
+	if target != null:
+		global_position = target.global_position
+		_update_camera_offset()
+
+
 func _update_camera_offset() -> void:
 	var back := Vector3(0, 0, distance).rotated(Vector3.UP, yaw)
 	_camera.position = back + Vector3(0, height, 0)

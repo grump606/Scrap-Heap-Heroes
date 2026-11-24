@@ -32,8 +32,11 @@ func next_entity_id() -> int:
 	return id
 
 
+## Returns the new entity id, or -1 if this player already has a hero.
 func add_hero(player_id: int, team: int, hero_id: StringName, spawn: Vector3) -> int:
-	assert(not _player_to_entity.has(player_id), "player already has a hero")
+	if _player_to_entity.has(player_id):
+		push_error("player %d already has a hero" % player_id)
+		return -1
 	var h := HeroState.new()
 	h.entity_id = next_entity_id()
 	h.player_id = player_id

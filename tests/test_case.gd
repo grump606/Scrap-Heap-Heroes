@@ -3,6 +3,13 @@ class_name TestCase
 extends RefCounted
 
 var failures: Array[String] = []
+## Errors this test triggers on purpose (substrings). The runner ignores a
+## logged error that matches one, and fails the test if one never appears.
+var expected_errors: Array[String] = []
+
+
+func expect_error(substring: String) -> void:
+	expected_errors.append(substring)
 
 
 func check(cond: bool, msg: String) -> void:

@@ -35,6 +35,7 @@ func start_match(setup: MatchSetup) -> void:
 	if session.local != null:
 		var me := session.world.hero_for_player(session.local.player_id)
 		_camera.target = _world_view.hero_view(me.entity_id)
+		_camera.snap_to_target()
 
 
 func _process(delta: float) -> void:

@@ -44,8 +44,17 @@ func _initialize() -> void:
 			t.call(method)
 			var problems: Array[String] = t.failures.duplicate()
 			if capture != null:
+				var unseen := t.expected_errors.duplicate()
 				for e in capture.take():
-					problems.append("error: " + e)
+					var matched := false
+					for want in t.expected_errors:
+						if e.contains(want):
+							matched = true
+							unseen.erase(want)
+					if not matched:
+						problems.append("error: " + e)
+				for want in unseen:
+					problems.append("expected an error containing '%s'" % want)
 			if problems.is_empty():
 				passed += 1
 				print("  PASS  %s :: %s" % [path.get_file(), method])

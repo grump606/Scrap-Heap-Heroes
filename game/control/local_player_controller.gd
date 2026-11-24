@@ -13,6 +13,10 @@ var input_enabled: bool = true
 func produce_commands(_snapshot: Snapshot, tick: int) -> Array[Command]:
 	var dir := Vector2.ZERO
 	if input_enabled:
-		dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		dir = dir.rotated(-camera_yaw)
-	return [Command.move(player_id, tick, dir)]
+		dir = sample_input().rotated(-camera_yaw)
+	return move_if_changed(tick, dir)
+
+
+## Raw stick/WASD vector, camera-relative. Tests override this.
+func sample_input() -> Vector2:
+	return Input.get_vector("move_left", "move_right", "move_forward", "move_back")
