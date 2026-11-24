@@ -5,10 +5,11 @@ extends RefCounted
 enum SlotKind { HUMAN = 0, BOT = 1, REPLAY = 2 }
 
 const DEFAULT_RULES_PATH := "res://data/match_rules.tres"
+const HEROES_DIR := "res://data/heroes/"
 
 var match_seed: int
 var rules: MatchRules
-## [{player_id, team, hero_id, kind, spawn}]
+## [{player_id, team, hero_def: HeroDef, kind, spawn}]
 var slots: Array = []
 ## Where REPLAY slots get their commands. Null for a live match.
 var replay_source: ReplayLog
@@ -16,6 +17,15 @@ var replay_source: ReplayLog
 
 static func default_rules() -> MatchRules:
 	return load(DEFAULT_RULES_PATH)
+
+
+## The definition for a hero id, from data/heroes/<id>.tres. Null if unknown.
+static func hero_def(hero_id: StringName) -> HeroDef:
+	var path := HEROES_DIR + String(hero_id) + ".tres"
+	if not ResourceLoader.exists(path):
+		push_error("unknown hero '%s' (no %s)" % [hero_id, path])
+		return null
+	return load(path)
 
 
 ## This build's version, stamped on replays (application/config/version).
@@ -29,8 +39,8 @@ static func practice(p_seed: int, p_rules: MatchRules) -> MatchSetup:
 	s.match_seed = p_seed
 	s.rules = p_rules
 	s.slots = [
-		{"player_id": 1, "team": 0, "hero_id": &"wombat", "kind": SlotKind.HUMAN, "spawn": Vector3(-5, 0, 5)},
-		{"player_id": 2, "team": 1, "hero_id": &"weasel", "kind": SlotKind.BOT, "spawn": Vector3(5, 0, -5)},
+		{"player_id": 1, "team": 0, "hero_def": hero_def(&"wombat"), "kind": SlotKind.HUMAN, "spawn": Vector3(-5, 0, 5)},
+		{"player_id": 2, "team": 1, "hero_def": hero_def(&"weasel"), "kind": SlotKind.BOT, "spawn": Vector3(5, 0, -5)},
 	]
 	return s
 
@@ -48,10 +58,14 @@ static func from_replay(replay: ReplayLog, p_rules: MatchRules) -> MatchSetup:
 	s.replay_source = replay
 	for slot in replay.slots:
 		var sp: Array = slot["spawn"]
+		var def := hero_def(StringName(slot["hero_id"]))
+		if def == null:
+			push_warning("replay rejected: unknown hero '%s'" % slot["hero_id"])
+			return null
 		s.slots.append({
 			"player_id": int(slot["player_id"]),
 			"team": int(slot["team"]),
-			"hero_id": StringName(slot["hero_id"]),
+			"hero_def": def,
 			"kind": SlotKind.REPLAY,
 			"spawn": Vector3(sp[0], sp[1], sp[2]),
 		})

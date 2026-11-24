@@ -16,6 +16,22 @@ func build_arena(half_size: float) -> void:
 	floor_mesh.material_override = mat
 	add_child(floor_mesh)
 
+	# Low walls on the edge the sim clamps heroes to, so the boundary is visible.
+	var wall_mat := StandardMaterial3D.new()
+	wall_mat.albedo_color = Color(0.36, 0.33, 0.3)
+	var t := 0.5
+	var h := 0.8
+	var long := half_size * 2.0 + t * 2.0
+	for side in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
+		var wall := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(t, h, long) if side.x != 0 else Vector3(long, h, t)
+		wall.mesh = box
+		wall.material_override = wall_mat
+		# Inner face sits on the clamp line; a hero's body may overlap it slightly.
+		wall.position = side * (half_size + t * 0.5) + Vector3(0, h * 0.5, 0)
+		add_child(wall)
+
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-55, 30, 0)
 	sun.shadow_enabled = true

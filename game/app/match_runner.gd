@@ -41,6 +41,7 @@ func start_match(setup: MatchSetup) -> void:
 func _process(delta: float) -> void:
 	if session.local != null:
 		session.local.camera_yaw = _camera.yaw
+		session.local.poll_frame_input()
 	for i in clock.advance(delta):
 		var _events := session.step()  # Audio/VFX directors will consume these.
 	_world_view.render(session.prev_snapshot, session.cur_snapshot, clock.alpha())

@@ -33,7 +33,11 @@ func next_entity_id() -> int:
 
 
 ## Returns the new entity id, or -1 if this player already has a hero.
-func add_hero(player_id: int, team: int, hero_id: StringName, spawn: Vector3) -> int:
+## def comes from the app layer (MatchSetup.hero_def); the sim never loads files.
+func add_hero(player_id: int, team: int, def: HeroDef, spawn: Vector3) -> int:
+	if def == null:
+		push_error("player %d has no hero definition" % player_id)
+		return -1
 	if _player_to_entity.has(player_id):
 		push_error("player %d already has a hero" % player_id)
 		return -1
@@ -41,15 +45,21 @@ func add_hero(player_id: int, team: int, hero_id: StringName, spawn: Vector3) ->
 	h.entity_id = next_entity_id()
 	h.player_id = player_id
 	h.team = team
-	h.hero_id = hero_id
+	h.hero_id = def.id
+	h.def = def
 	h.position = spawn
-	h.max_hp = rules.hero_max_hp
+	h.max_hp = def.max_hp
 	h.hp = h.max_hp
-	h.move_speed = rules.hero_move_speed
+	h.move_speed = def.move_speed(h.form)
 	heroes[h.entity_id] = h
 	_player_to_entity[player_id] = h.entity_id
-	_pending_events.append(SimEvent.new(SimEvent.Type.HERO_SPAWNED, tick, h.entity_id))
+	emit(SimEvent.new(SimEvent.Type.HERO_SPAWNED, tick, h.entity_id))
 	return h.entity_id
+
+
+## Systems report what happened through this; step() returns the tick's events.
+func emit(event: SimEvent) -> void:
+	_pending_events.append(event)
 
 
 func hero_for_player(player_id: int) -> HeroState:
@@ -71,6 +81,7 @@ func step(commands: Array[Command]) -> Array[SimEvent]:
 			push_warning("dropping command for tick %d at tick %d" % [cmd.tick, tick])
 			continue
 		_apply(cmd)
+	FormSystem.run(self)
 	MovementSystem.run(self, tick_dt)
 	tick += 1
 	var events := _pending_events
@@ -85,8 +96,10 @@ func _apply(cmd: Command) -> void:
 	match cmd.type:
 		Command.Type.MOVE:
 			h.move_input = cmd.move_dir().limit_length(1.0)
+		Command.Type.SWITCH_FORM:
+			h.form_request = int(cmd.payload.get("form", HeroState.NO_REQUEST))
 		_:
-			pass  # AIM, ABILITY, SWITCH_FORM arrive with the ability and form systems.
+			pass  # AIM and ABILITY arrive with the ability system.
 
 
 func snapshot() -> Snapshot:

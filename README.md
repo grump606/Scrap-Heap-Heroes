@@ -13,13 +13,14 @@ The design and architecture reference is the
 | `game/view/` | Everything seen or heard. Reads snapshots, never writes to the sim. |
 | `game/app/` | `match_session` runs the tick loop (sim, controllers, replay); `match_runner` drives it from frame time and draws it; settings autoload. |
 | `game/net/` | Multiplayer interface only, for later. |
-| `data/` | Tunable values as resources (`match_rules.tres`). |
+| `data/` | Tunable values as resources: `match_rules.tres`, one `heroes/<id>.tres` per hero. |
 | `tests/` | Headless tests. |
 
 ## Run
 
 - Play: open the folder in Godot and press F5. WASD moves the blue hero,
-  right-click captures the mouse to turn the camera, Esc releases it.
+  right-click captures the mouse to turn the camera, Esc releases it,
+  F switches between pet and mech form (2 s cooldown).
   The orange hero is a bot that goes through the same command system.
 - Tests:
   ```

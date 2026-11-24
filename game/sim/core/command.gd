@@ -34,6 +34,12 @@ static func move(p_player_id: int, p_tick: int, dir: Vector2) -> Command:
 	})
 
 
+## Asks for a form (HeroState.Form). Naming the target form, not "toggle",
+## means a duplicated or replayed command can't flip the hero back.
+static func switch_form(p_player_id: int, p_tick: int, form: int) -> Command:
+	return Command.new(p_player_id, p_tick, Type.SWITCH_FORM, {"form": form})
+
+
 func move_dir() -> Vector2:
 	return Vector2(float(payload.get("x", 0)) / AXIS_MAX, float(payload.get("z", 0)) / AXIS_MAX)
 

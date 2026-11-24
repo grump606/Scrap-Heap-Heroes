@@ -6,6 +6,6 @@
 script = ExtResource("1")
 tick_rate = 60
 arena_half_size = 20.0
-hero_move_speed = 6.0
 hero_acceleration = 40.0
-hero_max_hp = 1000
+form_switch_cooldown = 2.0
+data_version = 2

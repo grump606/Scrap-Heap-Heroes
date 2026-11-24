@@ -86,6 +86,6 @@ func test_heroes_stay_in_arena() -> void:
 func test_second_hero_for_same_player_is_refused() -> void:
 	var w := SimWorld.new(1)
 	expect_error("already has a hero")
-	check(w.add_hero(1, 0, &"wombat", Vector3.ZERO) > 0, "first hero added")
-	check_eq(w.add_hero(1, 0, &"weasel", Vector3.ZERO), -1, "second hero refused")
+	check(w.add_hero(1, 0, HeroDef.new(), Vector3.ZERO) > 0, "first hero added")
+	check_eq(w.add_hero(1, 0, HeroDef.new(), Vector3.ZERO), -1, "second hero refused")
 	check_eq(w.heroes.size(), 1, "only one hero exists")

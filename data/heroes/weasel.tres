@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/entities/hero_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"weasel"
+display_name = "Weasel (Noodle)"
+role = 1
+max_hp = 800
+pet_move_speed = 8.0
+mech_move_speed = 5.5

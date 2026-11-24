@@ -33,8 +33,9 @@ func _init(p_setup: MatchSetup) -> void:
 		_expected_hashes = setup.replay_source.hashes_by_tick()
 
 	for slot in setup.slots:
-		world.add_hero(slot["player_id"], slot["team"], slot["hero_id"], slot["spawn"])
-		replay.add_slot(slot["player_id"], slot["team"], slot["hero_id"], slot["spawn"])
+		var def: HeroDef = slot["hero_def"]
+		world.add_hero(slot["player_id"], slot["team"], def, slot["spawn"])
+		replay.add_slot(slot["player_id"], slot["team"], def.id if def != null else &"", slot["spawn"])
 		controllers.append(_make_controller(slot))
 
 	cur_snapshot = world.snapshot()

@@ -4,7 +4,7 @@ Nov 23, 2026 · @Grump606
 
 ## Status and decisions
 
-The first build step is done (Nov 24, 2026): the folder structure, the sim core, the headless determinism and replay tests, and a local and a bot controller sharing one command buffer. A basic third-person camera and placeholder views came along with it, ahead of the Foundation phase. Next up is Foundation. The design is single-player first, built so multiplayer can be added later without a rewrite. It targets Godot 4.3 or later.
+The first build step is done (Nov 24, 2026): the folder structure, the sim core, the headless determinism and replay tests, and a local and a bot controller sharing one command buffer. The Foundation phase is done too: an enclosed arena, the third-person camera, and pet/mech form switching with a cooldown and per-hero, per-form move speeds (`data/heroes/*.tres`), with placeholder art for both forms. Next up is the Core kit. The design is single-player first, built so multiplayer can be added later without a rewrite. It targets Godot 4.3 or later.
 
 This doc is the single primary reference for Scrap Heap Heroes: the game design (setting, match format, core mechanic and roster) comes first, then the technical architecture. It replaces the separate Roster Review draft. All gameplay numbers are placeholders for playtesting.
 
@@ -236,6 +236,7 @@ scrap-heap-heroes/
 │  │  │  ├─ match_rules.gd        # the resource type behind data/match_rules.tres
 │  │  │  └─ replay_log.gd         # seed, versions, slots, commands, state hashes
 │  │  ├─ entities/
+│  │  │  ├─ hero_def.gd           # per-hero tunables; the type behind data/heroes/*.tres
 │  │  │  ├─ hero_state.gd         # pos, vel, hp, form, mech_energy, cooldowns
 │  │  │  ├─ minion_state.gd
 │  │  │  ├─ tower_state.gd        # Tower + Power Core
@@ -364,7 +365,7 @@ Left out of the first step: abilities, forms, UI, art, minions and networking.
 After the first build step proves the architecture, the prototype builds three heroes first, then adds the rest one at a time. The roster review's earlier Foundation phase bundled camera and form switching into the first step; that now waits until the sim core and determinism test pass.
 
 1. **First build step (done):** the sim core, determinism test and two controllers described above.
-2. **Foundation:** one hero in one enclosed arena, third-person camera, and form switching.
+2. **Foundation (done):** one hero in one enclosed arena, third-person camera, and form switching. Switching is a command naming the target form; it applies only when the cooldown (`form_switch_cooldown`, 2 s placeholder) has passed, and a blocked request is dropped rather than queued. The meter, drain and eject come with the Core kit.
 3. **Core kit:** abilities, the energy meter with tunable values, and a training dummy.
 4. **Match loop:** minions, a tower, the Power Core, and basic bots that use the same command system as players.
 5. **First three heroes:** Wombat, Weasel, and Capybara, to test knockback, mobility, and healing.
