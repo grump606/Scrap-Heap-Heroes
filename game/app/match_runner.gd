@@ -1,7 +1,8 @@
 ## The only node that wires the match to the screen.
 ##
 ## Each frame: the clock says how many fixed ticks to run, the MatchSession
-## runs them, and the view draws, interpolating between the last two snapshots.
+## runs them, and the view draws, interpolating between the last two
+## snapshots, then shows that frame's events (damage numbers, effects).
 class_name MatchRunner
 extends Node3D
 
@@ -15,6 +16,7 @@ var clock: TickClock
 
 var _world_view: WorldView
 var _camera: CameraRig
+var _hud: Hud
 
 
 func _ready() -> void:
@@ -35,7 +37,11 @@ func start_match(setup: MatchSetup) -> void:
 	if session.local != null:
 		var me := session.world.hero_for_player(session.local.player_id)
 		_camera.target = _world_view.hero_view(me.entity_id)
+		_world_view.hero_view(me.entity_id).show_label = false
 		_camera.snap_to_target()
+		_hud = Hud.new()
+		add_child(_hud)
+		_hud.setup(setup.rules, me.def)
 
 
 func _process(delta: float) -> void:
@@ -43,8 +49,11 @@ func _process(delta: float) -> void:
 		session.local.camera_yaw = _camera.yaw
 		session.local.poll_frame_input()
 	for i in clock.advance(delta):
-		var _events := session.step()  # Audio/VFX directors will consume these.
+		session.step()
 	_world_view.render(session.prev_snapshot, session.cur_snapshot, clock.alpha())
+	_world_view.show_events(session.take_events(), session.cur_snapshot, session.world.tick_dt)
+	if _hud != null:
+		_hud.update(session.cur_snapshot.hero_for_player(session.local.player_id), session.cur_snapshot.tick)
 
 
 func _exit_tree() -> void:

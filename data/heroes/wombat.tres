@@ -1,6 +1,13 @@
-[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="HeroDef" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://game/sim/entities/hero_def.gd" id="1"]
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="2"]
+[ext_resource type="Resource" path="res://data/abilities/dust_bath.tres" id="a0"]
+[ext_resource type="Resource" path="res://data/abilities/mud_slide.tres" id="a1"]
+[ext_resource type="Resource" path="res://data/abilities/rump_bump.tres" id="a2"]
+[ext_resource type="Resource" path="res://data/abilities/wall_crush.tres" id="a3"]
+[ext_resource type="Resource" path="res://data/abilities/brace.tres" id="a4"]
+[ext_resource type="Resource" path="res://data/abilities/burrow_burst.tres" id="a5"]
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +17,8 @@ role = 0
 max_hp = 1000
 pet_move_speed = 6.5
 mech_move_speed = 4.5
+pet_radius = 0.5
+mech_radius = 0.8
+flat_reduction = 20
+pet_abilities = Array[ExtResource("2")]([ExtResource("a0"), ExtResource("a1")])
+mech_abilities = Array[ExtResource("2")]([ExtResource("a2"), ExtResource("a3"), ExtResource("a4"), ExtResource("a5")])

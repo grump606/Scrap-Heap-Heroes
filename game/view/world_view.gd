@@ -3,7 +3,14 @@
 class_name WorldView
 extends Node3D
 
+var effects := EffectsView.new()
+
 var _hero_views: Dictionary = {}  # entity_id -> HeroView
+var _dummy_views: Dictionary = {}  # entity_id -> DummyView
+
+
+func _ready() -> void:
+	add_child(effects)
 
 
 func build_arena(half_size: float) -> void:
@@ -49,20 +56,36 @@ func build_arena(half_size: float) -> void:
 ## prev and cur are the snapshots from the last two ticks; alpha is how far
 ## the clock is between them.
 func render(prev: Snapshot, cur: Snapshot, alpha: float) -> void:
-	for id in cur.heroes:
-		var d: Dictionary = cur.heroes[id]
-		if not _hero_views.has(id):
+	_sync(_hero_views, prev.heroes if prev != null else {}, cur.heroes, alpha, cur.tick,
+		func(id, d):
 			var v := HeroView.new()
 			v.setup(id, d["team"])
-			add_child(v)
-			_hero_views[id] = v
-		var p: Dictionary = prev.heroes.get(id, d) if prev != null else d
-		_hero_views[id].render(p, d, alpha)
-	for id in _hero_views.keys():
-		if not cur.heroes.has(id):
-			_hero_views[id].queue_free()
-			_hero_views.erase(id)
+			return v)
+	_sync(_dummy_views, prev.dummies if prev != null else {}, cur.dummies, alpha, cur.tick,
+		func(id, _d):
+			var v := DummyView.new()
+			v.setup(id)
+			return v)
+
+
+func show_events(events: Array[SimEvent], snap: Snapshot, tick_dt: float) -> void:
+	effects.show_events(events, snap, tick_dt)
 
 
 func hero_view(entity_id: int) -> HeroView:
 	return _hero_views.get(entity_id)
+
+
+## Creates, updates and removes one kind of view to match the snapshot.
+func _sync(views: Dictionary, prev: Dictionary, cur: Dictionary, alpha: float, tick: int, make: Callable) -> void:
+	for id in cur:
+		var d: Dictionary = cur[id]
+		if not views.has(id):
+			var v: Node3D = make.call(id, d)
+			add_child(v)
+			views[id] = v
+		views[id].render(prev.get(id, d), d, alpha, tick)
+	for id in views.keys():
+		if not cur.has(id):
+			views[id].queue_free()
+			views.erase(id)

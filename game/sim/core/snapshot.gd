@@ -6,11 +6,14 @@ extends RefCounted
 var tick: int
 ## entity_id -> Dictionary (see HeroState.to_dict). Plain data, safe to keep.
 var heroes: Dictionary = {}
+## entity_id -> Dictionary (see DummyState.to_dict).
+var dummies: Dictionary = {}
 
 
-func _init(p_tick: int = 0, p_heroes: Dictionary = {}) -> void:
+func _init(p_tick: int = 0, p_heroes: Dictionary = {}, p_dummies: Dictionary = {}) -> void:
 	tick = p_tick
 	heroes = p_heroes
+	dummies = p_dummies
 
 
 func hero_for_player(player_id: int) -> Dictionary:
@@ -24,4 +27,4 @@ func hero_for_player(player_id: int) -> Dictionary:
 ## copies everything; once it exists, enemies outside vision are removed here.
 ## Bots must use this, never the full snapshot.
 func for_team(_team: int) -> Snapshot:
-	return Snapshot.new(tick, heroes.duplicate(true))
+	return Snapshot.new(tick, heroes.duplicate(true), dummies.duplicate(true))

@@ -3,8 +3,12 @@
 class_name LocalPlayerController
 extends Controller
 
-## Set by the camera rig each frame. Movement is camera-relative, but only the
-## final world direction travels in the command.
+## Input actions for ability slots 0..3 of the current form. Pet form uses
+## the first two; mech form uses all four (the last is the ultimate).
+const ABILITY_ACTIONS: Array[StringName] = [&"ability_1", &"ability_2", &"ability_3", &"ultimate"]
+
+## Set by the camera rig each frame. Movement and aim are camera-relative,
+## but only final world directions travel in commands.
 var camera_yaw: float = 0.0
 ## False while a menu has focus or the window is unfocused.
 var input_enabled: bool = true:
@@ -12,16 +16,24 @@ var input_enabled: bool = true:
 		input_enabled = v
 		if not v:
 			_switch_pressed = false
+			_ability_presses.clear()
 
 var _switch_pressed := false
+## slot -> aim at the moment of the press.
+var _ability_presses: Dictionary = {}
 
 
 ## Called once per rendered frame, before any ticks run. Button presses are
 ## latched here because a frame can run zero ticks (high refresh rate) or
 ## several (catch-up): sampling them per tick would drop or repeat them.
 func poll_frame_input() -> void:
-	if input_enabled and Input.is_action_just_pressed("switch_form"):
+	if not input_enabled:
+		return
+	if Input.is_action_just_pressed("switch_form"):
 		request_switch()
+	for slot in ABILITY_ACTIONS.size():
+		if Input.is_action_just_pressed(ABILITY_ACTIONS[slot]):
+			request_ability(slot, camera_forward())
 
 
 ## Queues one form switch for the next tick. Tests call this directly.
@@ -29,16 +41,31 @@ func request_switch() -> void:
 	_switch_pressed = true
 
 
+## Queues one ability press for the next tick. Tests call this directly.
+func request_ability(slot: int, aim: Vector2) -> void:
+	_ability_presses[slot] = aim
+
+
+## Where the camera looks, on the ground plane.
+func camera_forward() -> Vector2:
+	return Vector2(-sin(camera_yaw), -cos(camera_yaw))
+
+
 func produce_commands(snapshot: Snapshot, tick: int) -> Array[Command]:
 	var dir := Vector2.ZERO
 	if input_enabled:
 		dir = sample_input().rotated(-camera_yaw)
 	var out := move_if_changed(tick, dir)
+	var me := snapshot.hero_for_player(player_id)
 	if _switch_pressed:
 		_switch_pressed = false
-		var me := snapshot.hero_for_player(player_id)
 		if not me.is_empty():
 			out.append(Command.switch_form(player_id, tick, HeroState.other_form(me["form"])))
+	var slots := _ability_presses.keys()
+	slots.sort()
+	for slot in slots:
+		out.append(Command.ability(player_id, tick, slot, _ability_presses[slot]))
+	_ability_presses.clear()
 	return out
 
 

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/sim/abilities/ability_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"dust_bath"
+logic = &"dust_bath"
+display_name = "Dust Bath"
+description = "Kick up a dust cloud: cleanses your slows and stuns, and slows enemies inside it."
+cooldown = 10.0
+radius = 3.5
+magnitude = 0.25
+duration = 2.0

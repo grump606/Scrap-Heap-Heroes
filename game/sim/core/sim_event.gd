@@ -3,7 +3,17 @@
 class_name SimEvent
 extends RefCounted
 
-enum Type { HERO_SPAWNED = 0, HIT = 1, DEATH = 2, FORM_SWITCH = 3, RESPAWN = 4 }
+enum Type {
+	HERO_SPAWNED = 0,
+	HIT = 1,            ## data: amount, source, x, z
+	DEATH = 2,
+	FORM_SWITCH = 3,    ## data: form
+	RESPAWN = 4,
+	ABILITY_CAST = 5,   ## data: ability, slot, windup (ticks)
+	EJECT = 6,          ## empty meter forced the hero out of mech form
+	WALL_SLAM = 7,      ## data: amount, x, z
+	AREA = 8,           ## an area effect landed. data: shape ("ring"/"cone"), x, z, radius, ax, az, angle
+}
 
 var type: int
 var tick: int

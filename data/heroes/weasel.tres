@@ -10,3 +10,5 @@ role = 1
 max_hp = 800
 pet_move_speed = 8.0
 mech_move_speed = 5.5
+pet_radius = 0.45
+mech_radius = 0.75

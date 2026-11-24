@@ -11,6 +11,8 @@ var match_seed: int
 var rules: MatchRules
 ## [{player_id, team, hero_def: HeroDef, kind, spawn}]
 var slots: Array = []
+## Training dummy positions.
+var dummies: Array[Vector3] = []
 ## Where REPLAY slots get their commands. Null for a live match.
 var replay_source: ReplayLog
 
@@ -42,6 +44,8 @@ static func practice(p_seed: int, p_rules: MatchRules) -> MatchSetup:
 		{"player_id": 1, "team": 0, "hero_def": hero_def(&"wombat"), "kind": SlotKind.HUMAN, "spawn": Vector3(-5, 0, 5)},
 		{"player_id": 2, "team": 1, "hero_def": hero_def(&"weasel"), "kind": SlotKind.BOT, "spawn": Vector3(5, 0, -5)},
 	]
+	# One dummy in the open, one by the north wall for Wall Crush.
+	s.dummies = [Vector3(0, 0, -4), Vector3(-6, 0, -17)]
 	return s
 
 
@@ -69,4 +73,6 @@ static func from_replay(replay: ReplayLog, p_rules: MatchRules) -> MatchSetup:
 			"kind": SlotKind.REPLAY,
 			"spawn": Vector3(sp[0], sp[1], sp[2]),
 		})
+	for p in replay.dummies:
+		s.dummies.append(Vector3(p[0], p[1], p[2]))
 	return s

@@ -6,7 +6,7 @@
 class_name ReplayLog
 extends RefCounted
 
-const FORMAT_VERSION := 3
+const FORMAT_VERSION := 4
 ## A state hash is recorded every this many ticks.
 const HASH_INTERVAL := 60
 
@@ -14,6 +14,7 @@ var match_seed: int
 var game_version: String
 var data_version: int
 var slots: Array = []  # [{player_id, team, hero_id: String, spawn: [x, y, z]}]
+var dummies: Array = []  # [[x, y, z]] training dummy positions
 var commands: Array = []  # Array of Command.to_dict()
 var hashes: Array = []  # [[tick, state_hash]], every HASH_INTERVAL ticks
 var final_tick: int = 0
@@ -27,6 +28,10 @@ func add_slot(player_id: int, team: int, hero_id: StringName, spawn: Vector3) ->
 		"hero_id": String(hero_id),
 		"spawn": [spawn.x, spawn.y, spawn.z],
 	})
+
+
+func add_dummy(at: Vector3) -> void:
+	dummies.append([at.x, at.y, at.z])
 
 
 func record(cmds: Array) -> void:
@@ -85,6 +90,7 @@ func to_dict() -> Dictionary:
 		"game_version": game_version,
 		"data_version": data_version,
 		"slots": slots.duplicate(true),
+		"dummies": dummies.duplicate(true),
 		"commands": commands.duplicate(true),
 		"hashes": hashes.duplicate(true),
 		"final_tick": final_tick,
@@ -110,6 +116,8 @@ static func from_dict(d: Dictionary) -> ReplayLog:
 			"hero_id": str(s["hero_id"]),
 			"spawn": [float(sp[0]), float(sp[1]), float(sp[2])],
 		})
+	for p in d.get("dummies", []):
+		r.dummies.append([float(p[0]), float(p[1]), float(p[2])])
 	for c in d.get("commands", []):
 		r.commands.append(_normalized_command(c))
 	for e in d.get("hashes", []):

@@ -37,9 +37,22 @@ func _init(p_setup: MatchSetup) -> void:
 		world.add_hero(slot["player_id"], slot["team"], def, slot["spawn"])
 		replay.add_slot(slot["player_id"], slot["team"], def.id if def != null else &"", slot["spawn"])
 		controllers.append(_make_controller(slot))
+	for at in setup.dummies:
+		world.add_dummy(at)
+		replay.add_dummy(at)
 
 	cur_snapshot = world.snapshot()
 	prev_snapshot = cur_snapshot
+
+
+## Events from every tick run since the last take_events(), for the view.
+var _events: Array[SimEvent] = []
+
+
+func take_events() -> Array[SimEvent]:
+	var out := _events
+	_events = []
+	return out
 
 
 ## Runs one fixed tick and returns its events.
@@ -50,6 +63,7 @@ func step() -> Array[SimEvent]:
 	var cmds := buffer.take(t)
 	replay.record(cmds)
 	var events := world.step(cmds)
+	_events.append_array(events)
 	prev_snapshot = cur_snapshot
 	cur_snapshot = world.snapshot()
 	if world.tick % ReplayLog.HASH_INTERVAL == 0:

@@ -4,7 +4,7 @@ Nov 23, 2026 · @Grump606
 
 ## Status and decisions
 
-The first build step is done (Nov 24, 2026): the folder structure, the sim core, the headless determinism and replay tests, and a local and a bot controller sharing one command buffer. The Foundation phase is done too: an enclosed arena, the third-person camera, and pet/mech form switching with a cooldown and per-hero, per-form move speeds (`data/heroes/*.tres`), with placeholder art for both forms. Next up is the Core kit. The design is single-player first, built so multiplayer can be added later without a rewrite. It targets Godot 4.3 or later.
+The first build step is done (Nov 24, 2026): the folder structure, the sim core, the headless determinism and replay tests, and a local and a bot controller sharing one command buffer. The Foundation phase is done too: an enclosed arena, the third-person camera, and pet/mech form switching with a cooldown and per-hero, per-form move speeds (`data/heroes/*.tres`), with placeholder art for both forms. The Core kit is done as well: the mech meter (drain, refill, eject into a vulnerable state), damage with flat reduction and a floor, timed statuses, knockback with wall slams, dashes, windups, death and respawn, training dummies, a HUD, and Wombat's full kit as the first data-driven abilities (`data/abilities/*.tres`, one script each in `game/sim/abilities/`). Next up is the match loop. The design is single-player first, built so multiplayer can be added later without a rewrite. It targets Godot 4.3 or later.
 
 This doc is the single primary reference for Scrap Heap Heroes: the game design (setting, match format, core mechanic and roster) comes first, then the technical architecture. It replaces the separate Roster Review draft. All gameplay numbers are placeholders for playtesting.
 
@@ -237,6 +237,9 @@ scrap-heap-heroes/
 │  │  │  └─ replay_log.gd         # seed, versions, slots, commands, state hashes
 │  │  ├─ entities/
 │  │  │  ├─ hero_def.gd           # per-hero tunables; the type behind data/heroes/*.tres
+│  │  │  ├─ unit_state.gd         # base for anything hittable: hp, statuses, forced movement
+│  │  │  ├─ status.gd             # timed effects: slow, armor, rooted, stunned, vulnerable
+│  │  │  ├─ dummy_state.gd        # training dummy
 │  │  │  ├─ hero_state.gd         # pos, vel, hp, form, mech_energy, cooldowns
 │  │  │  ├─ minion_state.gd
 │  │  │  ├─ tower_state.gd        # Tower + Power Core
@@ -249,7 +252,7 @@ scrap-heap-heroes/
 │  │  │  ├─ knockback_system.gd
 │  │  │  ├─ minion_ai_system.gd
 │  │  │  └─ match_flow_system.gd  # phases, win condition, respawns
-│  │  └─ abilities/               # one script per ability, data-driven
+│  │  └─ abilities/               # ability_def.gd, ability_registry.gd, one script per ability
 │  ├─ control/                    # turns intent into commands
 │  │  ├─ controller.gd            # base: produce_commands(snapshot, tick)
 │  │  ├─ local_player_controller.gd   # reads Input -> commands
@@ -366,7 +369,7 @@ After the first build step proves the architecture, the prototype builds three h
 
 1. **First build step (done):** the sim core, determinism test and two controllers described above.
 2. **Foundation (done):** one hero in one enclosed arena, third-person camera, and form switching. Switching is a command naming the target form; it applies only when the cooldown (`form_switch_cooldown`, 2 s placeholder) has passed, and a blocked request is dropped rather than queued. The meter, drain and eject come with the Core kit.
-3. **Core kit:** abilities, the energy meter with tunable values, and a training dummy.
+3. **Core kit (done):** abilities, the energy meter with tunable values, and a training dummy. Built with Wombat's full kit. Mud Slide's faster scrap pickup waits for scrap.
 4. **Match loop:** minions, a tower, the Power Core, and basic bots that use the same command system as players.
 5. **First three heroes:** Wombat, Weasel, and Capybara, to test knockback, mobility, and healing.
 6. **Then add:** Rabbit, Owl, and Tortoise one at a time, balancing as you go.
